@@ -132,9 +132,9 @@ After the recording, a data directory is generated in the current working direct
 <a name="analysis"></a>
 ## 4. Analysis
 
-You can download test data from [here](https://1drv.ms/u/s!AlpK-j-ONYp37SV3Nf3b7ooyW8eb?e=txUYkZ) (1.7 GB), to try the analysis below without your own recording. The following python commands are summarized in a [jupyter-notebook](../example.ipynb).
+You can download test data from [here](https://doi.org/10.6084/m9.figshare.17121275.v1) (1.7 GB), to try the analysis below without your own recording. The following python commands are summarized in a [jupyter-notebook](../example.ipynb).
 
-**NOTE**: In addition to data generated with the recorder app, you need `snout.csv` file in the data directory, which contains xy locations (in pixels) of the snout of each mouse in all the video frames in `vid.mp4`. In `snout.csv` file, each row represents a video frame, and the format of the row is `x of mouse1, y of mouse1, x of mouse2, y of mouse2, ...`. Prepare the data by processing `vid.mp4` with a video tracking software (such as [DeepLabCut](https://github.com/DeepLabCut/DeepLabCut), [SLEAP](https://github.com/murthylab/sleap), etc). In the test data, `snout.csv` files made by authors are included.
+**NOTE**: In addition to data generated with the recorder app, you need `snout.csv` file in the data directory, which contains xy locations (in pixels) of the snout of each mouse in all the video frames in `vid.mp4`. In `snout.csv` file, each row represents a video frame, and the format of the row is `x of mouse1, y of mouse1, x of mouse2, y of mouse2, ...`. Prepare the data by processing `vid.mp4` with a video tracking software (such as [DeepLabCut](https://github.com/DeepLabCut/DeepLabCut), [SLEAP](https://github.com/murthylab/sleap), [MARS](https://neuroethology.github.io/MARS), etc). In the test data, `snout.csv` files made by authors are included.
 
 ### 4.1 Preprocess - USV segmentation
 
