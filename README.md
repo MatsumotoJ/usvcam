@@ -1,6 +1,6 @@
 # USVCAM: acoustic camera system for ultrasonic vocalizations
 
-<img src="./docs/imgs/demo_loc_color.gif" width="38%"> &nbsp;&nbsp; <img src="./docs/imgs/demo_assign_icr.gif" width="38%"> &nbsp;&nbsp; <img src="./docs/imgs/pic_sensor.jpg" width="18%"> 
+<img src="./docs/imgs/demo_loc_color.gif" width="35%"> &nbsp;&nbsp; <img src="./docs/imgs/demo_assign_icr.gif" width="35%"> &nbsp;&nbsp; <img src="./docs/imgs/pic_sensor.jpg" width="18%"> 
 
 **USVCAM** is an acoustic camera system for localization and assignment of ultrasonic vocalizations (USVs) for interacting laboratory rodents. Thanks to its design utilizing a small phased microphone array combined with a camera, USVCAM has many advantages over the previous systems using a distributed microphone array.
 
