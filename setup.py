@@ -12,7 +12,7 @@ setuptools.setup(
     description="A system for localization and assignment of ultrasonic vocalizations in rodents",
     long_description=long_description,
     long_description_content_type="text/markdown",
-    url="https://github.com/xxxxxxxxx",
+    url="https://github.com/MatsumotoJ/usvcam",
     packages=setuptools.find_packages(),
     classifiers=[
         "Programming Language :: Python :: 3",
