@@ -13,9 +13,9 @@
 + User friendly interfaces and functions.
 
 For more information about the technology and the validation, see also our preprint below:
-> [**Acoustic camera system for measuring ultrasound communication in mice**](https://www.biorxiv.org/content/10.1101/2021.12.12.468927v1)            
+> [**Acoustic camera system for measuring ultrasound communication in mice**](https://doi.org/10.1016/j.isci.2022.104812)            
 > Matsumoto J, Kanno K, Kato M, Nishimaru H, Setogawa T, Chinzorig C, Shibata T, Nishijo H      
-> *[biorxiv 2021](https://www.biorxiv.org/content/10.1101/2021.12.12.468927v1)*
+> *[iScience 2022](https://doi.org/10.1016/j.isci.2022.104812)*
 
 ## Getting Started
 
@@ -43,9 +43,9 @@ USVCAM partly uses the codes of [USVSEG](https://github.com/rtachi-lab/usvseg). 
 
 ## Citation
 Please cite the following paper when you publish research works using USVCAM:
-> [**Acoustic camera system for measuring ultrasound communication in mice**](https://www.biorxiv.org/content/10.1101/2021.12.12.468927v1)            
+> [**Acoustic camera system for measuring ultrasound communication in mice**](https://doi.org/10.1016/j.isci.2022.104812)            
 > Matsumoto J, Kanno K, Kato M, Nishimaru H, Setogawa T, Chinzorig C, Shibata T, Nishijo H      
-> *[biorxiv 2021](https://www.biorxiv.org/content/10.1101/2021.12.12.468927v1)*
+> *[iScience 2022](https://doi.org/10.1016/j.isci.2022.104812)*
 
 More information about the USV segmentation algorithm used in the USVCAM is described in the paper below:
 > [**USVSEG: A robust method for segmentation of ultrasonic vocalizations in rodents.**](https://journals.plos.org/plosone/article?id=10.1371/journal.pone.0228907),            
