@@ -1,4 +1,4 @@
-<p align="center"><img src="./misc/usvcam_icon.png" width="250"></p>
+<p align="center"><img src="./misc/usvcam_icon.png" width="350"></p>
 
 # USVCAM: acoustic camera system for ultrasonic vocalizations
 
