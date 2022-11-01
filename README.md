@@ -1,10 +1,8 @@
-<center><table><tr><td>
+<div style="text-align: center;">
 <img src="./misc/usvcam_icon.png" width="250">
-</td><td></td><td>
-<p><font size="8">USVCAM</font></p>
-<p><font size="5">Acoustic camera system <br>for ultrasonic vocalizations</font></p>
-</td></tr></table></center>
-<hr><br>
+</div>
+
+# USVCAM: acoustic camera system for ultrasonic vocalizations
 
 <img src="./docs/imgs/demo_loc_color.gif" width="300"> &nbsp;&nbsp; <img src="./docs/imgs/demo_assign_icr.gif" width="300"> &nbsp;&nbsp; <img src="./docs/imgs/pic_sensor.jpg" width="150"> 
 
