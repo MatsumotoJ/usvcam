@@ -1,4 +1,10 @@
-# USVCAM: acoustic camera system for ultrasonic vocalizations
+<center><table><tr><td>
+<img src="./misc/usvcam_icon.png" width="250">
+</td><td></td><td>
+<p><font size="8">USVCAM</font></p>
+<p><font size="5">Acoustic camera system <br>for ultrasonic vocalizations</font></p>
+</td></tr></table></center>
+<hr><br>
 
 <img src="./docs/imgs/demo_loc_color.gif" width="300"> &nbsp;&nbsp; <img src="./docs/imgs/demo_assign_icr.gif" width="300"> &nbsp;&nbsp; <img src="./docs/imgs/pic_sensor.jpg" width="150"> 
 
@@ -54,5 +60,6 @@ More information about the USV segmentation algorithm used in the USVCAM is desc
 
 ## Acknowledgement
 This work was supported by Grant-in-Aid for Scientific Research from Japan Society for the Promotion of Science (nos. 16H06534, 21K06438, 19H04912), the Firstbank of Toyama Scholarship Foundation Research Grant, Tokyo Biochemical Research Foundation, Takeda Science Foundation, Grant for Basic Science Research Projects from The Sumitomo Foundation, and RIKEN Collaborative Technical Development in Data-driven Brain Science.
+The icon of USVCAM on the top of this README file was created by [Sayaka Togo](https://way105.com/). 
 
 
