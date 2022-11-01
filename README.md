@@ -1,6 +1,4 @@
-<div style="text-align: center;">
-<img src="./misc/usvcam_icon.png" width="250">
-</div>
+<p align="center"><img src="./misc/usvcam_icon.png" width="250"></p>
 
 # USVCAM: acoustic camera system for ultrasonic vocalizations
 
