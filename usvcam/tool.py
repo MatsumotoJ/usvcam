@@ -1325,12 +1325,12 @@ def flattening(mtsp,med=None):
     liftercutoff = 6; # fixed parameter
     fftsize = (mtsp.shape[0]-1)*2
 
-    cep = np.fft.fft(np.concatenate([mtsp, np.flipud(mtsp[1:-1,:])]))
+    cep = np.fft.fft(np.concatenate([mtsp, np.flipud(mtsp[1:-1,:])]), axis=0)
     lifter = np.ones(cep.shape)
     lifter[0:liftercutoff,:] = 0
     lifter[-liftercutoff:,:] = 0
 
-    temp = np.real(np.fft.ifft(cep*lifter))
+    temp = np.real(np.fft.ifft(cep*lifter, axis=0))
     liftered = temp[0:int(fftsize/2+1),:]
 
     if med is None:
