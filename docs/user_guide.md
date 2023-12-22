@@ -63,7 +63,7 @@ The picture below shows the assembled sensors.
 Install the camera driver ([Intel RealSense SDK 2.0](https://github.com/IntelRealSense/librealsense/releases)), the AD converter driver ([NI-DAQmx](https://www.ni.com/en-us/support/downloads/drivers/download.ni-daqmx.html)) and [Anaconda](https://docs.anaconda.com/anaconda/install/).
 Optionally, to use a CUDA GPU, install the recent [NVIDIA driver](https://www.nvidia.com/Download/index.aspx).
 
-Then, download the [USVCAM software](release) and extract it somewhere in the PC. Below the path of the extracted directory is assumed to be `C:/usvcam/`. 
+Then, download the [USVCAM software](https://github.com/MatsumotoJ/usvcam/releases/latest) and extract it somewhere in the PC. Below the path of the extracted directory is assumed to be `C:/usvcam/`. 
 
 Open **Anaconda Prompt** from the start menu. And move to the extracted directory with the following command:
 
