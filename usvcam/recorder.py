@@ -22,7 +22,8 @@ import yaml
 
 import usvcam.tool as tool
 
-config_path = sys.prefix + '/etc/usvcam/config.yaml'
+script_dir = os.path.dirname(__file__)
+config_path = script_dir + '/config.yaml' 
 
 def rs_start(color_mode, laser_power):
 

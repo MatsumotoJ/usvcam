@@ -25,7 +25,8 @@ import matplotlib.pyplot as plt
 
 import usvseg
 
-config_path = sys.prefix + '/etc/usvcam/config.yaml'
+script_dir = os.path.dirname(__file__)
+config_path = script_dir + '/config.yaml' 
 
 z_range = [2.0, 4.0]
 loc_thr = 2.3   # z value, around 99% in cum dist 

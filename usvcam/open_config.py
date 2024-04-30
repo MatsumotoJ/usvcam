@@ -5,7 +5,8 @@ import sys
 
 def main():
     
-    config_path = sys.prefix + '/etc/usvcam/config.yaml'
+    script_dir = os.path.dirname(__file__)
+    config_path = script_dir + '/config.yaml' 
 
     if platform.system() == 'Darwin':       # macOS
         subprocess.call(('open', config_path))
