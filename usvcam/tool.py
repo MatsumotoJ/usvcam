@@ -796,7 +796,7 @@ def create_localization_video(data_dir, calibfile, t_end=-1, color_eq=False):
 
     print('done')
 
-def dat2wav(data_dir, i_ch):
+def dat2wav(data_dir, i_ch, offset=0):
 
     fpath_dat = data_dir + '/snd.dat'
     fpath_wav = data_dir + '/' + os.path.splitext(os.path.basename(fpath_dat))[0] + '.ch{:d}.wav'.format(i_ch)
@@ -821,6 +821,7 @@ def dat2wav(data_dir, i_ch):
                 a = np.fromfile(f, np.int16, n_ch*readsize)
                 if len(a) == 0:
                     break
+                a = a - offset
                 x = a.reshape([-1, n_ch])
                 xx = x[:,i_ch]
                 xxx = np.zeros(xx.shape[0], np.int16)
@@ -1664,6 +1665,7 @@ def merge_assigned_segs(data_dir, n_mice, gap_min=0.03, conf_thr=0.99):
 
 def pick_seg_for_calib(data_dir, n_pos_check=20):
 
+    print('[How to use the GUI]')
     print('pick clear (noiseless, strong) vocal segments - space key, pick; other keys, skip...')
 
     paramfile = data_dir + '/param.h5'
@@ -1720,6 +1722,82 @@ def pick_seg_for_calib(data_dir, n_pos_check=20):
         
         P.append(snout_pos_voc[ii,:])
         SEG.append(seg2)
+
+    cv2.destroyAllWindows()
+
+    return SEG, P
+
+def pick_seg_for_calib_manual(data_dir):
+    print('[How to use the GUI]')
+    print('CLICK=select sound source; SPACE(non-ESC key)=go to next sound; ESC=Quit')
+
+    paramfile_path = data_dir + '/param.h5'
+    vidfile_path = data_dir + '/vid.mp4'
+    syncfile_path = data_dir + '/sync.csv'
+
+    vr = cv2.VideoCapture(vidfile_path)
+
+    with h5py.File(paramfile_path, mode='r') as f:
+        fs = f['/daq_param/fs'][()]
+        n_ch = f['/daq_param/n_ch'][()]
+
+    T = np.genfromtxt(syncfile_path, delimiter=',')
+
+    seg = load_usvsegdata_ss(data_dir)
+    _, I_ss = np.unique(seg[:, 4], axis=0, return_inverse=True)
+    n_ss = np.max(I_ss) + 1
+
+    # snout pos of each call
+    P = []
+    SEG = []
+    L = glob.glob(data_dir + '/*.usvseg_dat.csv')
+    wav_name = os.path.splitext(os.path.splitext(os.path.basename(L[0]))[0])[0]
+
+    def update_disp():
+        disp_img2 = copy.deepcopy(disp_img)
+        if not np.isnan(p_crnt[0]):
+            cv2.circle(disp_img2, (int(p_crnt[0]), int(p_crnt[1])), color=(0, 0, 255), thickness=2, radius=5)
+        for p in P:
+            cv2.drawMarker(disp_img2, (int(p[0]), int(p[1])), color=(0, 255, 255), thickness=2, markerSize=5)
+
+        cv2.imshow(wname, disp_img2)
+
+    def onMouse(event, x, y, flag, params):
+        if event == cv2.EVENT_LBUTTONDOWN:
+            p_crnt[0] = x
+            p_crnt[1] = y
+            update_disp()
+
+    wname = 'click sound source'
+    cv2.namedWindow(wname)
+    cv2.setMouseCallback(wname, onMouse, [])
+    disp_img = np.zeros([int(vr.get(cv2.CAP_PROP_FRAME_HEIGHT)), int(vr.get(cv2.CAP_PROP_FRAME_WIDTH)), 3], np.uint8)
+    p_crnt = np.zeros([2], float)
+    p_crnt[:] = np.nan
+    for i_ss in range(n_ss):
+        seg2 = seg[I_ss == i_ss, :]
+        i_frame = time2vidframe(data_dir, (np.min(seg2[:, 0]) + np.max(seg2[:, 0])) / 2, T, fs)
+        vr.set(cv2.CAP_PROP_POS_FRAMES, i_frame)
+        ret, frame = vr.read()
+
+        imgfile = data_dir + '/seg/' + wav_name + '_{:04}.jpg'.format(int(seg2[0, 4]))
+        img = cv2.imread(imgfile)
+
+        disp_img = frame
+        r = 100
+        a = cv2.resize(img, (r, r))
+        disp_img[-r:, -r:] = a
+        update_disp()
+
+        k = cv2.waitKey()
+        if k == 27:  # ESC
+            break
+
+        if not np.isnan(p_crnt[0]):
+            P.append(copy.deepcopy(p_crnt))
+            SEG.append(seg2)
+
+        p_crnt[:] = np.nan
 
     cv2.destroyAllWindows()
 

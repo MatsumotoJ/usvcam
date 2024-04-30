@@ -33,6 +33,11 @@ def calib_with_voc(data_dir, n_sample=20, outpath=None):
     tool.calc_micpos_with_voc(data_dir, SEG, P, h5f_outpath=outpath)
     print('done.')
 
+def calib_with_voc_mannual(data_dir, outpath=None):
+    SEG, P = tool.pick_seg_for_calib_manual(data_dir)
+    tool.calc_micpos_with_voc(data_dir, SEG, P, h5f_outpath=outpath)
+    print('done.')
+
 def estimate_assign_param(data_dirs, calibfiles, assignfile, n_iter=8, n_trial=7, show_figs=False):
     
     n_data = len(data_dirs)
@@ -63,8 +68,8 @@ def create_assignment_video(data_dir, n_mice, color_eq=False):
 def create_localization_video(data_dir, calibfile, t_end=-1, color_eq=False):
     tool.create_localization_video(data_dir, calibfile, t_end=t_end, color_eq=color_eq)
 
-def dat2wav(data_dir, i_ch):
-    tool.dat2wav(data_dir, i_ch)
+def dat2wav(data_dir, i_ch, offset=0):
+    tool.dat2wav(data_dir, i_ch, offset)
 
 def run_usvseg(data_dir, usvseg_prm_file):
 
