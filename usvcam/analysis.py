@@ -1,6 +1,8 @@
 import usvcam.tool as tool
+import usvseg
 import glob
 import os
+import yaml
 
 def assign_vocalizations(data_dir, calibfile, assignfile, n_mice, conf_thr=0.99, gap_min=0.03):
     
@@ -63,3 +65,17 @@ def create_localization_video(data_dir, calibfile, t_end=-1, color_eq=False):
 
 def dat2wav(data_dir, i_ch):
     tool.dat2wav(data_dir, i_ch)
+
+def run_usvseg(data_dir, usvseg_prm_file):
+
+    fp = glob.glob(data_dir + '/*.wav')
+    fp = fp[0]
+
+    with open(usvseg_prm_file, 'r') as f:
+        params = yaml.load(f, Loader=yaml.SafeLoader)
+
+    savefp = os.path.splitext(fp)[0] + '.usvseg_dat.csv'
+    outp = data_dir + '/seg'
+    fname_audiblewav = os.path.splitext(fp)[0] + '.audible.wav'
+
+    usvseg.proc_wavfile(params, fp, savefp, outp, fname_audiblewav=fname_audiblewav, usvcamflg=True)

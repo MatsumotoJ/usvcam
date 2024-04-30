@@ -1,0 +1,20 @@
+bandwidth: 4
+durmax: 1.0
+durmin: 0.005
+fftsize: 512
+freqmax: 100000.0
+freqmin: 30000.0
+gapmin: 0.03
+imageoutput: true
+imagetype: 1
+liftercutoff: 6
+mapH: 6000.0
+mapL: 1000.0
+margin: 0.015
+readsize: 2.0
+synthsndoutput: true
+threshval: 3.0
+timestep: 0.0005
+traceoutput: true
+wavfileoutput: false
+

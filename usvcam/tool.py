@@ -23,12 +23,9 @@ from tqdm import tqdm
 from multiprocessing import Pool, freeze_support, RLock
 import matplotlib.pyplot as plt
 
+import usvseg
 
 config_path = sys.prefix + '/etc/usvcam/config.yaml'
-
-D = scipy.io.loadmat(sys.prefix + '/etc/usvcam/D.mat', squeeze_me=True)
-D = D['D']
-D = np.array(D)
 
 z_range = [2.0, 4.0]
 loc_thr = 2.3   # z value, around 99% in cum dist 
@@ -283,12 +280,12 @@ def calc_flattened_spec(x, fs, med=None):
     fftsize = 512
     timestep = 0.0005
 
-    mtsp = multitaperspec(x,fs,fftsize,timestep,D)
+    mtsp = usvseg.multitaperspec(x,fs,fftsize,timestep)
 
     if med is None:
-        fltnd, med = flattening(mtsp)
+        fltnd, med = usvseg.flattening(mtsp, liftercutoff=6)
     else:
-        fltnd, med = flattening(mtsp, med)
+        fltnd, med = usvseg.flattening(mtsp, med, liftercutoff=6)
 
     return fltnd, med
 
@@ -1320,28 +1317,6 @@ def find_nearest_pos(candidate_pos, ref_pos):
         p = candidate_pos
     return p, d
 
-def flattening(mtsp,med=None):
-    
-    liftercutoff = 6; # fixed parameter
-    fftsize = (mtsp.shape[0]-1)*2
-
-    cep = np.fft.fft(np.concatenate([mtsp, np.flipud(mtsp[1:-1,:])]), axis=0)
-    lifter = np.ones(cep.shape)
-    lifter[0:liftercutoff,:] = 0
-    lifter[-liftercutoff:,:] = 0
-
-    temp = np.real(np.fft.ifft(cep*lifter, axis=0))
-    liftered = temp[0:int(fftsize/2+1),:]
-
-    if med is None:
-        med = np.median(liftered,axis=1)
-    
-    liftmed = liftered - np.tile(med, [liftered.shape[1],1]).T
-
-    fltnd = scipy.ndimage.median_filter(liftmed, [5, 1])
-    
-    return fltnd, med
-
 def gen_rand_points(data_dir, calibfile, D, p0, roi):
 
     az0, el0 = point2angle(data_dir, calibfile, np.array([p0]))
@@ -1683,32 +1658,6 @@ def merge_assigned_segs(data_dir, n_mice, gap_min=0.03, conf_thr=0.99):
     else:
         np.savetxt(data_dir + '/result.csv', data_summary, 
                     header='#,mouseID,assign_rate,start,end,duration,maxfreq,maxamp,meanfreq,cvfreq')
-
-def multitaperspec(wav,fs,fftsize,timestep, tapers):
-
-    step = round(timestep*fs)
-    wavlen = wav.shape[0]
-    ntapers = tapers.shape[1]
-    nsteps = math.floor((wavlen-fftsize+step)/step)
-    spgsize = fftsize/2+1
-
-    n = wav.strides[0]
-    wavslice = np.lib.stride_tricks.as_strided(wav, shape=(nsteps, fftsize), strides=(n*step,n))
-    wavslice = wavslice.T
-
-    spmat = np.zeros([int(spgsize),nsteps,ntapers])
-    for n in range(ntapers):
-        a = np.tile(tapers[:,n], [nsteps,1]).T
-        ww = wavslice * a
-        
-        ft = np.fft.rfft(ww.T, fftsize)
-
-        ft = ft.T
-        spmat[:,:,n] = np.abs(ft[np.arange(int(fftsize/2+1)),:])
-        
-    mtsp = 20*np.log10(np.mean(spmat,axis = 2)*math.sqrt(1/(2*math.pi*fftsize)))
-
-    return mtsp
 
 def pick_seg_for_calib(data_dir, n_pos_check=20):
 

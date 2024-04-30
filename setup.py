@@ -26,5 +26,5 @@ setuptools.setup(
             'config=usvcam.open_config:main', 
             ]
     },
-    data_files=[('etc/usvcam', ['usvcam/config.yaml', 'usvcam/D.mat'])] 
+    data_files=[('etc/usvcam', ['usvcam/config.yaml'])] 
 )

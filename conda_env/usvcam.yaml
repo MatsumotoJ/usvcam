@@ -150,3 +150,4 @@ dependencies:
     - toml==0.10.1
     - typed-ast==1.4.1
     - wrapt==1.12.1
+    - usvseg==1.0.1

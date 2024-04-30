@@ -25,11 +25,11 @@ See [the user guide](./docs/user_guide.md).
 
 ## Roadmap
 - [x] First release
+- [x] Integrating USVSEG as a python script
 - [ ] Support for different types of cameras
-- [ ] Integrating USVSEG+ as a python script
-- [ ] User guide for video tracking of interacting animals
-- [ ] Use of more sensitive microphone for larger recording area.
 - [ ] Cheaper, pre-assembled sensor unit
+- [ ] Use of more sensitive microphone for larger recording area.
+- [ ] User guide for video tracking of interacting animals
 
 ## Contacts
 Follow [@jumpeim_uot](https://twitter.com/jumpeim_uot) on Twitter for the news and update.
@@ -41,18 +41,18 @@ For other issues, email to Jumpei Matsumoto or Kouta Kanno (the e-mail addresses
 ## License
 USVCAM is distributed under the MIT License. See [LICENSE](./LICENSE) for more information. 
 
-USVCAM partly uses the codes of [USVSEG](https://github.com/rtachi-lab/usvseg). See [LICENSE_USVSEG](./usvseg_plus/LICENSE_USVSEG) for the license of the original version.
-
 ## Citation
 Please cite the following paper when you publish research works using USVCAM:
 > [**Acoustic camera system for measuring ultrasound communication in mice**](https://doi.org/10.1016/j.isci.2022.104812)            
 > Matsumoto J, Kanno K, Kato M, Nishimaru H, Setogawa T, Chinzorig C, Shibata T, Nishijo H      
 > *[iScience 2022](https://doi.org/10.1016/j.isci.2022.104812)*
 
-More information about the USV segmentation algorithm used in the USVCAM is described in the paper below:
+More information about USVSEG, the USV segmentation algorithm used in the USVCAM, is described in the paper below:
 > [**USVSEG: A robust method for segmentation of ultrasonic vocalizations in rodents.**](https://journals.plos.org/plosone/article?id=10.1371/journal.pone.0228907),            
 > Tachibana RO, Kanno K, Okabe S, Kobayasi KI, Okanoya K      
 > *[PloS one 15(2) e0228907](https://journals.plos.org/plosone/article?id=10.1371/journal.pone.0228907)*
+
+See also USVSEG Github repositories: [original Matlab verion](https://github.com/rtachi-lab/usvseg); [Python version](https://github.com/MatsumotoJ/usvseg_python)
 
 ## Acknowledgement
 This work was supported by Grant-in-Aid for Scientific Research from Japan Society for the Promotion of Science (nos. 16H06534, 21K06438, 19H04912), the Firstbank of Toyama Scholarship Foundation Research Grant, Tokyo Biochemical Research Foundation, Takeda Science Foundation, Grant for Basic Science Research Projects from The Sumitomo Foundation, and RIKEN Collaborative Technical Development in Data-driven Brain Science.

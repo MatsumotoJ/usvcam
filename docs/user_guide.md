@@ -152,7 +152,12 @@ usvcam.analysis.dat2wav(data_dir, 3)
 ```
 This will convert the `snd.dat` file to a wav file.
 
-Then, perform USV segmentation using the wav file with USVSEG+ module (read [here](../usvseg_plus/README.md) for detail).
+Then, perform USV segmentation with the USVSEG algorithm, by running the following python codes:
+```
+usvseg_prm_file = '[file path of USVSEG parameters]'
+usvcam.analysis.run_usvseg(data_dir, usvseg_prm_file)
+```
+Replace [file path of USVSEG parameters] with the path of USVSEG parameter file (see [this example](../misc/usvseg_prm.yaml) of the parameter file). See [the USVSEG Github repository](https://github.com/MatsumotoJ/usvseg_python) for detailed documentation on USVSEG. 
 
 ### 4.2 Calibrating microphone positions
 
