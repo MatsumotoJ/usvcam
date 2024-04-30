@@ -423,11 +423,13 @@ def calc_micpos_with_voc(data_dir, SEG, P, calibfile=None, h5f_outpath=None):
 
     fpath_dat = data_dir + '/snd.dat'
 
+    n_mic = n_ch
+
     with open(fpath_dat, 'rb') as fp_dat:
 
         def get_error(dx, P, SEG, data_dir, mic0pos, speedOfSound):
 
-            dx = np.reshape(dx, (3,3))
+            dx = np.reshape(dx, (n_mic-1,3))
             dx = np.vstack([np.array([0,0,0]), dx])
             dx = dx + mic0pos
 
@@ -460,14 +462,14 @@ def calc_micpos_with_voc(data_dir, SEG, P, calibfile=None, h5f_outpath=None):
 
         # run optimization
         if calibfile is None:
-            dx0 = np.tile([0,0,0], (3,1))
+            dx0 = np.tile([0,0,0], (n_mic-1,1))
         else:
             with h5py.File(calibfile, mode='r') as f:
                 dx0 = f['/result/micpos'][()]
             dx0 = dx0[1:,:] - dx0[0,:]
 
-        lb = np.tile([-0.01, -0.01, -0.003], (3,1))
-        ub = np.tile([0.01, 0.01, 0.003], (3,1))
+        lb = np.tile([-0.01, -0.01, -0.003], (n_mic-1,1))
+        ub = np.tile([0.01, 0.01, 0.003], (n_mic-1,1))
 
         dx0 = dx0.flatten()
         lb = lb.flatten()
@@ -479,7 +481,7 @@ def calc_micpos_with_voc(data_dir, SEG, P, calibfile=None, h5f_outpath=None):
         R = scipy.optimize.minimize(get_error, x0=dx0, args=(P, SEG, data_dir, mic0pos, speedOfSound), method='L-BFGS-B', bounds=b, callback=callbackF)
 
         dx_pred = R.x
-        dx_pred = np.reshape(dx_pred, (3,3))
+        dx_pred = np.reshape(dx_pred, (n_mic-1,3))
         dx_pred = np.vstack([np.array([0,0,0]), dx_pred])
         micpos = dx_pred + mic0pos
         print('estimated micpos:')
@@ -815,10 +817,10 @@ def dat2wav(data_dir, i_ch):
             f_out.setframerate(fs)
             f_out.setcomptype('NONE', 'not compressed')
             while True:
-                a = np.fromfile(f, np.int16, 4*readsize)
+                a = np.fromfile(f, np.int16, n_ch*readsize)
                 if len(a) == 0:
                     break
-                x = a.reshape([-1, 4])
+                x = a.reshape([-1, n_ch])
                 xx = x[:,i_ch]
                 xxx = np.zeros(xx.shape[0], np.int16)
                 xxx[:] = xx
