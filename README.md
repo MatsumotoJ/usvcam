@@ -14,7 +14,7 @@
 + Syllable extraction for each of the simultaneously vocalizing animals.
 + User friendly interfaces and functions.
 
-For more information about the technology and the validation, see also our preprint below:
+For more information about the technology and the validation, see also our paper below:
 > [**Acoustic camera system for measuring ultrasound communication in mice**](https://doi.org/10.1016/j.isci.2022.104812)            
 > Matsumoto J, Kanno K, Kato M, Nishimaru H, Setogawa T, Chinzorig C, Shibata T, Nishijo H      
 > *[iScience 2022](https://doi.org/10.1016/j.isci.2022.104812)*
