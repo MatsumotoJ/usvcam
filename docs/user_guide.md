@@ -132,7 +132,7 @@ After the recording, a data directory is generated in the current working direct
 <a name="analysis"></a>
 ## 4. Analysis
 
-You can download test data from [here](https://doi.org/10.6084/m9.figshare.17121275.v1) (1.7 GB), to try the analysis below without your own recording. The following python commands are summarized in a [jupyter-notebook](../example.ipynb).
+You can download test data from [here](https://doi.org/10.6084/m9.figshare.17121275.v1) (1.7 GB; test_data.zip), to try the analysis below without your own recording. The following python commands are summarized in a [jupyter-notebook](../example.ipynb).
 
 **NOTE**: In addition to data generated with the recorder app, you need `snout.csv` file in the data directory, which contains xy locations (in pixels) of the snout of each mouse in all the video frames in `vid.mp4`. In `snout.csv` file, each row represents a video frame, and the format of the row is `x of mouse1, y of mouse1, x of mouse2, y of mouse2, ...`. Prepare the data by processing `vid.mp4` with a video tracking software (such as [DeepLabCut](https://github.com/DeepLabCut/DeepLabCut), [SLEAP](https://github.com/murthylab/sleap), [MARS](https://neuroethology.github.io/MARS), etc). In the test data, `snout.csv` files made by authors are included.
 
@@ -168,7 +168,7 @@ The program will automatically categorize syllables into 20 groups based on the 
 
 ### 4.3 Estimating parameters for assignment
 
-*This process takes hours. If you are using the test data and want to skip the process, download the result from [here](https://1drv.ms/u/s!AlpK-j-ONYp37SS_s967ZveXYM2D?e=h5GUqC).*
+*This process takes hours. If you are using the test data and want to skip the process, download the result from [here](https://doi.org/10.6084/m9.figshare.17121275.v1) (assign_param.h5).*
 
 Performance of the sound localization depends on various factors, especially acoustic environment of the recording setup. Thus, USVCAM needs data for performance validation in each environment and adjusts criteria for assignment according to the validation. For the validation data, you need single mouse data. Recommended total number of vocalization (syllables) in the validation data is >1,000. They can be recorded in multiple sessions. 
 
