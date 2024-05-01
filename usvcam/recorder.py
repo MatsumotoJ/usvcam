@@ -20,7 +20,7 @@ import datetime
 import os
 import yaml
 
-import usvcam.tool as tool
+from . import tool
 
 script_dir = os.path.dirname(__file__)
 config_path = script_dir + '/config.yaml' 

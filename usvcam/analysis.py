@@ -1,8 +1,9 @@
-import usvcam.tool as tool
 import usvseg
 import glob
 import os
 import yaml
+
+from . import tool
 
 def assign_vocalizations(data_dir, calibfile, assignfile, n_mice, conf_thr=0.99, gap_min=0.03):
     
