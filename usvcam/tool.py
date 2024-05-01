@@ -290,6 +290,7 @@ def calc_flattened_spec(x, fs, med=None):
 
     return fltnd, med
 
+## TODO: this calc_micpos() is not used anymore. Delete in near future; and rename "calc_micpos_with_voc" as "calc_micpos"
 def calc_micpos(calib_h5file, f_target, mic0pos, optim_3d, optim_global):
     # 1. load data
     S = []
@@ -405,7 +406,7 @@ def calc_micpos(calib_h5file, f_target, mic0pos, optim_3d, optim_global):
         else:
             f.create_dataset('/result/micpos', data = micpos)
 
-def calc_micpos_with_voc(data_dir, SEG, P, calibfile=None, h5f_outpath=None):
+def calc_micpos_with_voc(data_dir, SEG, P, calibfile=None, h5f_outpath=None, pos_lim=None, pos_init=None, vis_progress=False):
 
     #with open(config_path, 'r') as f:
     #    usvcam_cfg = yaml.safe_load(f)
@@ -459,18 +460,34 @@ def calc_micpos_with_voc(data_dir, SEG, P, calibfile=None, h5f_outpath=None):
             global Nfeval
             e = get_error(Xi, P, SEG, data_dir, mic0pos, speedOfSound)
             print('iter:{0:4d}, f(x) = '.format(Nfeval) + str(-e))
+
+            if vis_progress:
+                xx = np.reshape(Xi, (n_mic-1,3))
+                plt.plot(0, 0, 'x')
+                plt.plot(xx[:,0], xx[:,1], 'o')
+                plt.xlim(pos_lim[0][0], pos_lim[1][0])
+                plt.ylim(pos_lim[0][1], pos_lim[1][1])
+                plt.show()
+
             Nfeval += 1
 
         # run optimization
         if calibfile is None:
-            dx0 = np.tile([0,0,0], (n_mic-1,1))
+            if pos_init is None:
+                dx0 = np.tile([0,0,0], (n_mic-1,1))
+            else:
+                dx0 = np.array(pos_init)
         else:
             with h5py.File(calibfile, mode='r') as f:
                 dx0 = f['/result/micpos'][()]
             dx0 = dx0[1:,:] - dx0[0,:]
 
-        lb = np.tile([-0.01, -0.01, -0.003], (n_mic-1,1))
-        ub = np.tile([0.01, 0.01, 0.003], (n_mic-1,1))
+        if pos_lim is None:
+            lb = np.tile([-0.01, -0.01, -0.003], (n_mic-1,1))
+            ub = np.tile([0.01, 0.01, 0.003], (n_mic-1,1))
+        else:
+            lb = np.tile(pos_lim[0], (n_mic-1,1))
+            ub = np.tile(pos_lim[1], (n_mic-1,1))
 
         dx0 = dx0.flatten()
         lb = lb.flatten()

@@ -29,14 +29,12 @@ def assign_vocalizations(data_dir, calibfile, assignfile, n_mice, conf_thr=0.99,
     
     print('done.')
 
-def calib_with_voc(data_dir, n_sample=20, outpath=None):
-    SEG, P = tool.pick_seg_for_calib(data_dir, 20)
-    tool.calc_micpos_with_voc(data_dir, SEG, P, h5f_outpath=outpath)
-    print('done.')
-
-def calib_with_voc_mannual(data_dir, outpath=None):
-    SEG, P = tool.pick_seg_for_calib_manual(data_dir)
-    tool.calc_micpos_with_voc(data_dir, SEG, P, h5f_outpath=outpath)
+def calib_with_voc(data_dir, mannual_mode=False, n_sample=20, outpath=None, pos_lim=None, pos_init=None, vis_progress=False):
+    if mannual_mode:
+        SEG, P = tool.pick_seg_for_calib_manual(data_dir)
+    else:
+        SEG, P = tool.pick_seg_for_calib(data_dir, n_sample)
+    tool.calc_micpos_with_voc(data_dir, SEG, P, h5f_outpath=outpath, pos_lim=pos_lim, pos_init=pos_init, vis_progress=vis_progress)
     print('done.')
 
 def estimate_assign_param(data_dirs, calibfiles, assignfile, n_iter=8, n_trial=7, show_figs=False):
