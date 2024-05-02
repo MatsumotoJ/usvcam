@@ -28,6 +28,7 @@ See [the user guide](./docs/user_guide.md).
 - [x] Integrating USVSEG as a python script
 - [x] Support for different types of cameras (see [here](./misc/for_custom_system/README.md))
 - [ ] Cheaper, pre-assembled sensor unit
+- [ ] GUI
 - [ ] Use of more sensitive microphone for larger recording area.
 - [ ] User guide for video tracking of interacting animals
 
