@@ -520,6 +520,9 @@ def calc_seg_stft(fp_dat, seg, fs, n_ch, pressure_calib):
     mrgn = 0.01
     t_intv = [np.min(seg[:,0]) - mrgn, np.max(seg[:,0]) + mrgn]
 
+    if t_intv[0] < 0:
+        t_intv[0] = 0
+
     n_ch  = n_ch.astype(np.int64)
 
     spos = (int(t_intv[0]*fs)*2*n_ch).astype(np.int64)
@@ -539,6 +542,9 @@ def calc_seg_power(fp_dat, seg, tau, fs, n_ch, pressure_calib, return_average=Tr
 
     mrgn = 0.01
     t_intv = [np.min(seg[:,0]) - mrgn, np.max(seg[:,0]) + mrgn]
+    
+    if t_intv[0] < 0:
+        t_intv[0] = 0
 
     n_ch  = n_ch.astype(np.int64)
 
@@ -1366,9 +1372,12 @@ def gen_rand_points(data_dir, calibfile, D, p0, roi):
 
 def get_sound_spec(fp_dat, t_intv, fs, n_ch, tgt_ch, med=None):
 
+    if t_intv[0] < 0:
+        t_intv[0] = 0
+
     spos = (int(t_intv[0]*fs)*2*n_ch).astype(np.int64)
     fp_dat.seek(spos, 0)
-    simg = np.fromfile(fp_dat, np.int16, int((t_intv[1]-t_intv[0])*n_ch*fs))
+    simg = np.fromfile(fp_dat, np.int16, int(n_ch*int((t_intv[1]-t_intv[0])*fs)) )
     simg = simg.reshape([-1, n_ch])
     x = simg[:,tgt_ch]
 
@@ -1421,6 +1430,8 @@ def get_tau(data_dir, calibfile, speedOfSound, points=None, d=5, micpos=None, vi
         #    with open(config_path, 'r') as f_cfg:
         #        usvcam_cfg = yaml.safe_load(f_cfg)
         #        camera_height = usvcam_cfg['camera_height']
+
+    coeff = coeff.ravel()
 
     r = np.reshape(r, [3, 3]).T
     cm = np.zeros([4,4])
@@ -1487,6 +1498,8 @@ def load_usvsegdata_ss(data_dir):
         if os.path.getsize(fn) == 0:
             continue
         a = np.genfromtxt(fn, delimiter=',')
+        if a.ndim == 1:
+            a = np.reshape(a, [1,-1])
         I = a[:,3]>0
         a = a[I,:]
 
