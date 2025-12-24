@@ -436,7 +436,7 @@ def calc_micpos(calib_h5file, f_target, mic0pos, optim_3d, optim_global):
         else:
             f.create_dataset('/result/micpos', data = micpos)
 
-def calc_micpos_with_voc(data_dir, SEG, P, calibfile=None, h5f_outpath=None, pos_lim=None, pos_init=None, vis_progress=False):
+def calc_micpos_with_voc(data_dir, SEG, P, calibfile=None, h5f_outpath=None, pos_lim=None, pos_searchlim=None, pos_init=None, vis_progress=False, ftol=1e-3, maxiter=100):
 
     #with open(config_path, 'r') as f:
     #    usvcam_cfg = yaml.safe_load(f)
@@ -511,11 +511,17 @@ def calc_micpos_with_voc(data_dir, SEG, P, calibfile=None, h5f_outpath=None, pos
             dx0 = dx0[1:,:] - dx0[0,:]
 
         if pos_lim is None:
-            lb = np.tile([-0.01, -0.01, -0.003], (n_mic-1,1))
-            ub = np.tile([0.01, 0.01, 0.003], (n_mic-1,1))
+            if pos_searchlim is None:
+                lb = np.tile([-0.01, -0.01, -0.003], (n_mic-1,1))
+                ub = np.tile([0.01, 0.01, 0.003], (n_mic-1,1))
+            else:
+                lb = dx0 + np.tile(pos_searchlim[0], (n_mic-1,1))
+                ub = dx0 + np.tile(pos_searchlim[1], (n_mic-1,1))
         else:
             lb = np.tile(pos_lim[0], (n_mic-1,1))
             ub = np.tile(pos_lim[1], (n_mic-1,1))
+
+        pos_lim = [np.min(lb, axis=0), np.max(ub, axis=0)]
 
         dx0 = dx0.flatten()
         lb = lb.flatten()
@@ -524,7 +530,8 @@ def calc_micpos_with_voc(data_dir, SEG, P, calibfile=None, h5f_outpath=None, pos
         b = scipy.optimize.Bounds(lb, ub)
 
         print('Running optimization...')
-        R = scipy.optimize.minimize(get_error, x0=dx0, args=(P, SEG, data_dir, mic0pos, speedOfSound), method='L-BFGS-B', bounds=b, callback=callbackF)
+        R = scipy.optimize.minimize(get_error, x0=dx0, args=(P, SEG, data_dir, mic0pos, speedOfSound), method='L-BFGS-B', 
+                                    bounds=b, callback=callbackF, options={'ftol': ftol, 'maxiter': maxiter})
 
         dx_pred = R.x
         dx_pred = np.reshape(dx_pred, (n_mic-1,3))
@@ -653,7 +660,7 @@ def calc_point_power(x, f, tau, n_ch):
 
     return s
 
-def calc_sspec_all_frame(data_dir, calibfile, fpath_out, t_end=-1):
+def calc_sspec_all_frame(data_dir, calibfile, fpath_out, t_end=-1, d=5):
 
     #with open(config_path, 'r') as f:
     #    usvcam_cfg = yaml.safe_load(f)
@@ -669,7 +676,7 @@ def calc_sspec_all_frame(data_dir, calibfile, fpath_out, t_end=-1):
         speedOfSound = f['/misc/speedOfSound'][()]
         pressure_calib = f['/misc/pressure_calib'][()]
 
-    tau, grid_shape = get_tau(data_dir, calibfile, speedOfSound, d=5)
+    tau, grid_shape = get_tau(data_dir, calibfile, speedOfSound, d=d)
 
     seg = load_usvsegdata_ss(data_dir)
 
@@ -1780,6 +1787,8 @@ def pick_seg_for_calib_manual(data_dir):
     print('[How to use the GUI]')
     print('CLICK=select sound source; SPACE(non-ESC key)=go to next sound; ESC=Quit')
 
+    w_max = 600
+
     paramfile_path = data_dir + '/param.h5'
     vidfile_path = data_dir + '/vid.mp4'
     syncfile_path = data_dir + '/sync.csv'
@@ -1807,7 +1816,7 @@ def pick_seg_for_calib_manual(data_dir):
         if not np.isnan(p_crnt[0]):
             cv2.circle(disp_img2, (int(p_crnt[0]), int(p_crnt[1])), color=(0, 0, 255), thickness=2, radius=5)
         for p in P:
-            cv2.drawMarker(disp_img2, (int(p[0]), int(p[1])), color=(0, 255, 255), thickness=2, markerSize=5)
+            cv2.drawMarker(disp_img2, (int(p[0]*r_scale), int(p[1]*r_scale)), color=(0, 255, 255), thickness=2, markerSize=5)
 
         cv2.imshow(wname, disp_img2)
 
@@ -1821,6 +1830,12 @@ def pick_seg_for_calib_manual(data_dir):
     cv2.namedWindow(wname)
     cv2.setMouseCallback(wname, onMouse, [])
     disp_img = np.zeros([int(vr.get(cv2.CAP_PROP_FRAME_HEIGHT)), int(vr.get(cv2.CAP_PROP_FRAME_WIDTH)), 3], np.uint8)
+    
+    if w_max < vr.get(cv2.CAP_PROP_FRAME_WIDTH):
+        r_scale = w_max / vr.get(cv2.CAP_PROP_FRAME_WIDTH)
+    else:
+        r_scale = None
+    
     p_crnt = np.zeros([2], float)
     p_crnt[:] = np.nan
     for i_ss in range(n_ss):
@@ -1833,6 +1848,9 @@ def pick_seg_for_calib_manual(data_dir):
         img = cv2.imread(imgfile)
 
         disp_img = frame
+        if r_scale is not None:
+            disp_img = cv2.resize(disp_img, (int(disp_img.shape[1]*r_scale), int(disp_img.shape[0]*r_scale)))
+        
         r = 100
         a = cv2.resize(img, (r, r))
         disp_img[-r:, -r:] = a
@@ -1843,7 +1861,7 @@ def pick_seg_for_calib_manual(data_dir):
             break
 
         if not np.isnan(p_crnt[0]):
-            P.append(copy.deepcopy(p_crnt))
+            P.append(copy.deepcopy(p_crnt/r_scale))
             SEG.append(seg2)
 
         p_crnt[:] = np.nan
