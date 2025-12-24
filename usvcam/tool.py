@@ -30,7 +30,6 @@ import usvseg
 script_dir = os.path.dirname(__file__)
 config_path = script_dir + '/config.yaml' 
 
-z_range = [2.0, 4.0]
 
 cam_delay = 0.1
 
@@ -1204,9 +1203,14 @@ def draw_spect_on_all_vidframe(fpath_out, data_dir, sspecfile, t_end=-1, color_e
     vw.release()
     vr.release()
 
-def draw_spec_on_vidframe(sspec, frame, vid_mrgn=0, color_eq=False, only_max=True):
+def draw_spec_on_vidframe(sspec, frame, vid_mrgn=0, color_eq=False, only_max=False, z_range=None):
 
     sspec_z = (sspec - np.mean(sspec)) / np.std(sspec)
+
+    if z_range is None:
+        z_range[0] = max(2.0, np.max(sspec_z)*0.9)
+        z_range[1] = max(4.0, np.max(sspec_z))
+    
     sspec_z_disp = (sspec_z - z_range[0]) / (z_range[1] - z_range[0])
     
     sspec_z_disp[sspec_z_disp < 0.0] = 0.0
