@@ -1,6 +1,7 @@
 from intervaltree.intervaltree import IntervalTree
 import numpy as np
 import numexpr as ne
+import scipy.optimize
 import h5py
 import itertools
 import math
@@ -22,7 +23,8 @@ import sys
 from tqdm import tqdm
 from multiprocessing import Pool, freeze_support, RLock
 import matplotlib.pyplot as plt
-
+import soundfile
+import io
 import usvseg
 
 script_dir = os.path.dirname(__file__)
@@ -40,6 +42,36 @@ usegpu = usvcam_cfg['use_gpu']
 if usegpu:
     print('gpu calculation enabled')
     import cupy
+
+def open_dat(data_dir):
+
+    if os.path.isfile(data_dir + '/snd.dat'):
+        return open(data_dir + '/snd.dat', 'rb')
+    elif os.path.isfile(data_dir + '/snd.flac'):
+        return soundfile.SoundFile(data_dir + '/snd.flac', 'r')
+    else:
+        raise ValueError("Unsupported file format. Only '.dat' and '.flac' files are supported.")
+
+def read_dat(fp_dat, t_intv, fs, n_ch):
+    simg = None
+    if isinstance(fp_dat, io.BufferedReader):      # dat file
+        spos = (int(t_intv[0]*fs)*2*n_ch).astype(np.int64)
+        fp_dat.seek(spos, 0)
+        simg = np.fromfile(fp_dat, np.int16, int(n_ch*int((t_intv[1]-t_intv[0])*fs)) )
+        simg = simg.reshape([-1, n_ch])
+
+    elif isinstance(fp_dat, soundfile.SoundFile):   # flac file
+        start_sample = int(t_intv[0] * fs)
+        end_sample = int(t_intv[1] * fs)
+
+        fp_dat.seek(start_sample)
+        simg = fp_dat.read(end_sample - start_sample, dtype='int16')
+
+        # Ensure the correct shape
+        if simg.shape[1] != n_ch:
+            simg = simg.reshape([-1, n_ch])
+
+    return simg
 
 def angle2point(data_dir, calibfile, azimuth, elevation):
 
@@ -119,8 +151,6 @@ def assign_all_segs(data_dir, calibfile, assignfile, n_mice, conf_thr=0.99):
 
     T = np.genfromtxt(data_dir + '/sync.csv', delimiter=',')
 
-    fpath_dat = data_dir + '/snd.dat'
-
     loc = np.genfromtxt(data_dir + '/loc.csv', delimiter=',')
     if loc.ndim == 1:
         loc = np.reshape(loc, [1, -1])
@@ -148,7 +178,7 @@ def assign_all_segs(data_dir, calibfile, assignfile, n_mice, conf_thr=0.99):
         tree_mask2 = intervaltree.IntervalTree.from_tuples(mask[mask[:,2]==2,:2])
 
     outdata = []
-    with open(fpath_dat, 'rb') as fp_dat:
+    with open_dat(data_dir) as fp_dat:
         for i_ss in tqdm(range(np.max(I_ss)+1)):
 
             seg2 = seg[I_ss==i_ss,:]
@@ -423,11 +453,9 @@ def calc_micpos_with_voc(data_dir, SEG, P, calibfile=None, h5f_outpath=None, pos
         pressure_calib = f['/misc/pressure_calib'][()]
         mic0pos = f['/misc/mic0pos'][()]
 
-    fpath_dat = data_dir + '/snd.dat'
-
     n_mic = n_ch
 
-    with open(fpath_dat, 'rb') as fp_dat:
+    with open_dat(data_dir) as fp_dat:
 
         def get_error(dx, P, SEG, data_dir, mic0pos, speedOfSound):
 
@@ -525,10 +553,8 @@ def calc_seg_stft(fp_dat, seg, fs, n_ch, pressure_calib):
 
     n_ch  = n_ch.astype(np.int64)
 
-    spos = (int(t_intv[0]*fs)*2*n_ch).astype(np.int64)
-    fp_dat.seek(spos, 0)
-    simg = np.fromfile(fp_dat, np.int16, int(n_ch*int((t_intv[1]-t_intv[0])*fs)) )
-    simg = simg.reshape([-1, n_ch])
+    simg = read_dat(fp_dat, t_intv, fs, n_ch)
+
     simg = simg / pressure_calib
 
     nfft = 192
@@ -658,10 +684,8 @@ def calc_sspec_all_frame(data_dir, calibfile, fpath_out, t_end=-1):
     n_frame = T.shape[0]
     wsize = fs/10
 
-    fpath_dat = data_dir + '/snd.dat'
-
     with h5py.File(fpath_out, mode='w') as fp_out:
-        with open(fpath_dat, 'rb') as fp_dat:
+        with open_dat(data_dir) as fp_dat:
             for i_frame in tqdm(range(n_frame)):
 
                 t_intv = np.array([T[i_frame,1]-wsize/2, T[i_frame,1]+wsize/2])/fs
@@ -699,8 +723,6 @@ def calc_vm_stats(data_dir, calibfile, roi=None, iter_id=None):
 
     T = np.genfromtxt(data_dir + '/sync.csv', delimiter=',')
 
-    fpath_dat = data_dir + '/snd.dat'
-
     loc = np.genfromtxt(data_dir + '/loc.csv', delimiter=',')
 
     snout_pos = np.genfromtxt(data_dir + '/snout.csv', delimiter=',')
@@ -724,7 +746,7 @@ def calc_vm_stats(data_dir, calibfile, roi=None, iter_id=None):
         fp_out.create_dataset('/D', data = D)
         fp_out.create_dataset('/n_trial', data = n_trial)
 
-        with open(fpath_dat, 'rb') as fp_dat:
+        with open_dat(data_dir) as fp_dat:
             for i_ss in tqdm(range(np.max(I_ss)+1)):
 
                 seg2 = seg[I_ss==i_ss,:]
@@ -774,7 +796,10 @@ def clean_data_dir(data_dir, filekeep=[]):
 def create_assignment_video(data_dir, n_mice, color_eq=False):
 
     audiblewavfile = glob.glob(data_dir + '/*.audible.wav')
+    if len(audiblewavfile) == 0:
+        audiblewavfile = glob.glob(data_dir + '/*.audible.flac')
     audiblewavfile = audiblewavfile[0]
+    
     tmpvidfile = './tmp/tmp.mp4'
 
     print('making video with assignment...')
@@ -789,6 +814,8 @@ def create_assignment_video(data_dir, n_mice, color_eq=False):
 def create_localization_video(data_dir, calibfile, t_end=-1, color_eq=False):
 
     audiblewavfile = glob.glob(data_dir + '/*.audible.wav')
+    if len(audiblewavfile) == 0:
+        audiblewavfile = glob.glob(data_dir + '/*.audible.flac')
     audiblewavfile = audiblewavfile[0]
 
     os.makedirs('./tmp', exist_ok=True)
@@ -834,7 +861,7 @@ def dat2wav(data_dir, i_ch, offset=0):
     readsize = fs
 
     cnt = 0
-    with open(fpath_dat, 'r') as f:
+    with open(fpath_dat, 'rb') as f:
         with wave.open(fpath_wav, 'wb') as f_out:
             f_out.setnchannels(1)
             f_out.setsampwidth(sw)
@@ -968,8 +995,6 @@ def draw_assign_on_all_vidframe(fpath_out, data_dir, n_mice, conf_thr=0.99, colo
         n_ch = f['/daq_param/n_ch'][()]
         n_ch = n_ch.astype(np.int64)
 
-    fpath_dat = data_dir + '/snd.dat'
-
     snout_pos = np.genfromtxt(data_dir + '/snout.csv', delimiter=',')
 
     T[:,1] = T[:,1]/fs
@@ -990,7 +1015,7 @@ def draw_assign_on_all_vidframe(fpath_out, data_dir, n_mice, conf_thr=0.99, colo
         mask = np.loadtxt(data_dir + '/mask.csv', delimiter=',')
         print('mask data is found', flush=True)
 
-    with open(fpath_dat, 'rb') as fp_dat:
+    with open_dat(data_dir) as fp_dat:
         
         crnt_ts = -10
         cnt = 0  
@@ -1033,11 +1058,11 @@ def draw_assign_on_all_vidframe(fpath_out, data_dir, n_mice, conf_thr=0.99, colo
                         pt = np.array([i_t, i_f]).T
                         I = np.argsort(i_t)
                         pt = pt[I,:]
-                        cv2.polylines(spec_show, [pt.astype(np.int)], False, (0,0,0), thickness=10)
+                        cv2.polylines(spec_show, [pt.astype(int)], False, (0,0,0), thickness=10)
                         i_mouse = seg3[0,1]
                         if i_mouse >= 0:
                             clr = clrs[int(i_mouse)]
-                            cv2.polylines(spec_show, [pt.astype(np.int)], False, clr, thickness=4)
+                            cv2.polylines(spec_show, [pt.astype(int)], False, clr, thickness=4)
 
                 spec_show_masked = copy.deepcopy(spec_show)
                 if mask is not None:
@@ -1106,8 +1131,6 @@ def draw_spect_on_all_vidframe(fpath_out, data_dir, sspecfile, t_end=-1, color_e
         n_ch = f['/daq_param/n_ch'][()]
         n_ch = n_ch.astype(np.int64)
 
-    fpath_dat = data_dir + '/snd.dat'
-
     if t_end > 0:
         I = T[:,1]/fs < t_end
         T = T[I,:]
@@ -1120,7 +1143,7 @@ def draw_spect_on_all_vidframe(fpath_out, data_dir, sspecfile, t_end=-1, color_e
     fmt = cv2.VideoWriter_fourcc('m', 'p', '4', 'v') 
     vw = cv2.VideoWriter(fpath_out, fmt, v_fs, (int(vr.get(cv2.CAP_PROP_FRAME_WIDTH)), int(vr.get(cv2.CAP_PROP_FRAME_HEIGHT)+spect_height)), isColor=True) 
     with h5py.File(sspecfile, mode='r') as f:
-        with open(fpath_dat, 'rb') as fp_dat:
+        with open_dat(data_dir) as fp_dat:
             frame_snd = []  
             if '/sspec' in f:
                 for key in f['/sspec'].keys():
@@ -1223,7 +1246,7 @@ def estimate_assign_param(data_dirs, calibfiles, outfile, n_trial=7, iter_ids=No
             snout_pos = np.genfromtxt(data_dir + '/snout.csv', delimiter=',')
             snout_pos = snout_pos[:,:2]
 
-            snout_pos = snout_pos[loc[:,2].astype(np.int), :]
+            snout_pos = snout_pos[loc[:,2].astype(int), :]
 
             az, el = point2angle(data_dir, calibfiles[i_data], snout_pos)
             snout_pos_angle = np.array([az, el]).T
@@ -1375,10 +1398,8 @@ def get_sound_spec(fp_dat, t_intv, fs, n_ch, tgt_ch, med=None):
     if t_intv[0] < 0:
         t_intv[0] = 0
 
-    spos = (int(t_intv[0]*fs)*2*n_ch).astype(np.int64)
-    fp_dat.seek(spos, 0)
-    simg = np.fromfile(fp_dat, np.int16, int(n_ch*int((t_intv[1]-t_intv[0])*fs)) )
-    simg = simg.reshape([-1, n_ch])
+    simg = read_dat(fp_dat, t_intv, fs, n_ch)
+    
     x = simg[:,tgt_ch]
 
     b, a = scipy.signal.butter(1, 1000/fs/2, btype='high')
@@ -1396,7 +1417,7 @@ def get_sspec_peaks(sspec, vid_size, vid_mrgn=0, roi=None):
     
     sspec_f = scipy.ndimage.maximum_filter(sspec, size=5)
     I = np.where(np.logical_and(sspec_f==sspec, (sspec-np.mean(sspec))/np.std(sspec)>min_peak_lev))
-    peaks = np.array([I[1], I[0]], dtype=np.float).T
+    peaks = np.array([I[1], I[0]], dtype=float).T
 
     r_x = (vid_size[0]+vid_mrgn*2)/sspec.shape[1]
     r_y = (vid_size[1]+vid_mrgn*2)/sspec.shape[0]
@@ -1531,8 +1552,6 @@ def locate_all_segs(data_dir, calibfile, vid_mrgn=100, roi=None, out_sspec=False
 
     T = np.genfromtxt(data_dir + '/sync.csv', delimiter=',')
 
-    fpath_dat = data_dir + '/snd.dat'
-
     if out_sspec:
         os.makedirs(data_dir + '/loc', exist_ok=True)
         vid_file = data_dir + '/vid.mp4'
@@ -1548,7 +1567,7 @@ def locate_all_segs(data_dir, calibfile, vid_mrgn=100, roi=None, out_sspec=False
 
     rslt = np.zeros((np.max(I_ss)+1, 100+3))
     rslt[:,:] = np.nan
-    with open(fpath_dat, 'rb') as fp_dat:
+    with open_dat(data_dir) as fp_dat:
         for i_ss in tqdm(range(np.max(I_ss)+1)):
 
             seg2 = seg[I_ss==i_ss,:]
@@ -1906,7 +1925,6 @@ def rad2deg(th):
 
 def time2vidframe(data_dir, t, T, fs):
     # T: sync.csv
-    v_fs = 30
 
     TT = T[:,1]/fs
     i_frame = np.argmin(abs(TT-(t+cam_delay)))

@@ -72,14 +72,18 @@ def dat2wav(data_dir, i_ch, offset=0):
 
 def run_usvseg(data_dir, usvseg_prm_file):
 
-    fp = glob.glob(data_dir + '/*.wav')
-    fp = fp[0]
+    if os.path.isfile(data_dir + '/snd.flac'):
+        fp = data_dir + '/snd.flac'
+    else:
+        L = glob.glob(data_dir + '/*.wav')
+        L = [file for file in L if ".audible." not in file]
+        fp = L[0]
 
     with open(usvseg_prm_file, 'r') as f:
         params = yaml.load(f, Loader=yaml.SafeLoader)
 
     savefp = os.path.splitext(fp)[0] + '.usvseg_dat.csv'
     outp = data_dir + '/seg'
-    fname_audiblewav = os.path.splitext(fp)[0] + '.audible.wav'
+    fname_audiblewav = os.path.splitext(fp)[0] + '.audible.flac'
 
     usvseg.proc_wavfile(params, fp, savefp, outp, fname_audiblewav=fname_audiblewav, usvcamflg=True)
