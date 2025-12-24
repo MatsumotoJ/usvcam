@@ -1206,10 +1206,11 @@ def draw_spect_on_all_vidframe(fpath_out, data_dir, sspecfile, t_end=-1, color_e
     vw.release()
     vr.release()
 
-def draw_spec_on_vidframe(sspec, frame, vid_mrgn=0, color_eq=False):
+def draw_spec_on_vidframe(sspec, frame, vid_mrgn=0, color_eq=False, only_max=True):
 
     sspec_z = (sspec - np.mean(sspec)) / np.std(sspec)
     sspec_z_disp = (sspec_z - z_range[0]) / (z_range[1] - z_range[0])
+    
     sspec_z_disp[sspec_z_disp < 0.0] = 0.0
     sspec_z_disp[sspec_z_disp > 1.0] = 1.0
     sspec_z_disp *= 255
@@ -1237,13 +1238,15 @@ def draw_spec_on_vidframe(sspec, frame, vid_mrgn=0, color_eq=False):
     img3 = img3.astype(np.uint8)
 
     # draw peak pos
-    peaks = get_sspec_peaks(sspec, (frame.shape[1], frame.shape[0]), vid_mrgn=vid_mrgn)
-    
-    if peaks.shape[0] > 0:
-        for i in range(peaks.shape[0]):
-            cv2.drawMarker(img3, (int(peaks[i,0]), int(peaks[i,1])), (255, 255, 255), markerSize=10, thickness=2)
-    
 
+    #peaks = get_sspec_peaks(sspec, (frame.shape[1], frame.shape[0]), vid_mrgn=vid_mrgn)
+    peaks = get_sspec_peaks(sspec, (frame.shape[1], frame.shape[0]), vid_mrgn=vid_mrgn, only_max=only_max)
+    
+    if peaks is not None:
+        if peaks.shape[0] > 0:
+            for i in range(peaks.shape[0]):
+                cv2.drawMarker(img3, (int(peaks[i,0]), int(peaks[i,1])), (255, 255, 255), markerSize=10, thickness=2)
+    
     return img3
 
 def estimate_assign_param(data_dirs, calibfiles, outfile, n_trial=7, iter_ids=None, show_figs=True):
@@ -1428,18 +1431,29 @@ def get_sound_spec(fp_dat, t_intv, fs, n_ch, tgt_ch, med=None):
 
     return spec, med
 
-def get_sspec_peaks(sspec, vid_size, vid_mrgn=0, roi=None):
+def get_sspec_peaks(sspec, vid_size, vid_mrgn=0, roi=None, only_max=False):
     
-    sspec_f = scipy.ndimage.maximum_filter(sspec, size=5)
-    I = np.where(np.logical_and(sspec_f==sspec, (sspec-np.mean(sspec))/np.std(sspec)>min_peak_lev))
-    peaks = np.array([I[1], I[0]], dtype=float).T
+    peaks = None
 
-    r_x = (vid_size[0]+vid_mrgn*2)/sspec.shape[1]
-    r_y = (vid_size[1]+vid_mrgn*2)/sspec.shape[0]
+    if only_max:
 
-    peaks[:,0] *= r_x
-    peaks[:,1] *= r_y
-    peaks -= vid_mrgn
+        if (np.max(sspec)-np.mean(sspec))/np.std(sspec) > min_peak_lev:
+            I = np.unravel_index(np.argmax(sspec), sspec.shape)
+            peaks = np.array([I[1], I[0]], dtype=float)
+            peaks = np.reshape(peaks, [1,2])
+            
+    else:
+        sspec_f = scipy.ndimage.maximum_filter(sspec, size=5)
+        I = np.where(np.logical_and(sspec_f==sspec, (sspec-np.mean(sspec))/np.std(sspec)>min_peak_lev))
+        peaks = np.array([I[1], I[0]], dtype=float).T
+
+    if peaks is not None:
+        r_x = (vid_size[0]+vid_mrgn*2)/sspec.shape[1]
+        r_y = (vid_size[1]+vid_mrgn*2)/sspec.shape[0]
+
+        peaks[:,0] *= r_x
+        peaks[:,1] *= r_y
+        peaks -= vid_mrgn
 
     return peaks
 
@@ -1547,7 +1561,7 @@ def load_usvsegdata_ss(data_dir):
     
     return seg
 
-def locate_all_segs(data_dir, calibfile, vid_mrgn=100, roi=None, out_sspec=False, color_eq=False):
+def locate_all_segs(data_dir, calibfile, vid_mrgn=100, roi=None, out_sspec=False, color_eq=False, only_max=False):
     
     #with open(config_path, 'r') as f:
     #    usvcam_cfg = yaml.safe_load(f)
@@ -1589,7 +1603,7 @@ def locate_all_segs(data_dir, calibfile, vid_mrgn=100, roi=None, out_sspec=False
 
             i_frame = time2vidframe(data_dir, (np.min(seg2[:,0])+np.max(seg2[:,0]))/2, T, fs)
             
-            S, peaks = locate_seg(fp_dat, seg2, tau, grid_shape, fs, n_ch, pressure_calib, vid_size, vid_mrgn=vid_mrgn, roi=roi)
+            S, peaks = locate_seg(fp_dat, seg2, tau, grid_shape, fs, n_ch, pressure_calib, vid_size, vid_mrgn=vid_mrgn, roi=roi, only_max=only_max)
             
             if out_sspec:
                 vr.set(cv2.CAP_PROP_POS_FRAMES,i_frame)
@@ -1604,6 +1618,8 @@ def locate_all_segs(data_dir, calibfile, vid_mrgn=100, roi=None, out_sspec=False
             rslt[i_ss, 1] = seg2[0,3]
             rslt[i_ss, 2] = i_frame
             
+            if peaks is None:
+                continue
             if peaks.shape[0] > 0:
                 if is_sspec_localized(S, loc_thr):
                     p = peaks.ravel()
@@ -1612,13 +1628,13 @@ def locate_all_segs(data_dir, calibfile, vid_mrgn=100, roi=None, out_sspec=False
     np.savetxt(data_dir + '/loc.csv', rslt, delimiter=',',
                 header=' ID_A,ID_B,video_frame,peak_locations (x1-y1-x2-y2-...),')
 
-def locate_seg(fp_dat, seg, tau, grid_shape, fs, n_ch, pressure_calib, vid_size, vid_mrgn=0, roi=None):
+def locate_seg(fp_dat, seg, tau, grid_shape, fs, n_ch, pressure_calib, vid_size, vid_mrgn=0, roi=None, only_max=False):
     
     S = calc_seg_power(fp_dat, seg, tau, fs, n_ch, pressure_calib, return_average=True)
 
     S = np.reshape(S, grid_shape)
 
-    peaks = get_sspec_peaks(S, vid_size, vid_mrgn, roi)
+    peaks = get_sspec_peaks(S, vid_size, vid_mrgn, roi, only_max=only_max)
 
     return S, peaks
      
