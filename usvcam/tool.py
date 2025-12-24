@@ -1092,7 +1092,12 @@ def draw_assign_on_all_vidframe(fpath_out, data_dir, n_mice, conf_thr=0.99, colo
             t_intv = [t[i_frame]-(1/v_fs/2), t[i_frame]+(1/v_fs/2)]
             I = np.logical_and(seg[:,6] >= t_intv[0], seg[:,6] <= t_intv[1])
             seg2 = seg[I, :]
-            sp = np.reshape(snout_pos[cnt-1, :], [-1, 2])
+            if snout_pos.shape[0] >= cnt:
+                sp = np.reshape(snout_pos[cnt-1, :], [-1, 2])
+            else:
+                sp = np.zeros([n_mice, 2])
+                sp[:,:] = np.nan
+                
             for i_mouse in range(n_mice):
                 if np.sum(np.isnan(sp[i_mouse, :]))==0:
                     cv2.circle(frame, (int(sp[i_mouse, 0]), int(sp[i_mouse, 1])), 3, clrs[i_mouse], thickness=-1, lineType=cv2.LINE_AA)
@@ -1167,6 +1172,9 @@ def draw_spect_on_all_vidframe(fpath_out, data_dir, sspecfile, t_end=-1, color_e
                     ret, frame = vr.read()
                     crnt_ts = T[cnt,1]
                     cnt += 1
+                    
+                if frame is None:
+                    continue
 
                 if t[i_frame] - pre_t >= 1:
                     pre_t = int(t[i_frame])
