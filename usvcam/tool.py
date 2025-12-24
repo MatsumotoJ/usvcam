@@ -1208,7 +1208,8 @@ def draw_spec_on_vidframe(sspec, frame, vid_mrgn=0, color_eq=False, only_max=Fal
     sspec_z = (sspec - np.mean(sspec)) / np.std(sspec)
 
     if z_range is None:
-        z_range[0] = max(2.0, np.max(sspec_z)*0.9)
+        z_range = [0, 0]
+        z_range[0] = max(1.0, np.max(sspec_z)*0.9)
         z_range[1] = max(4.0, np.max(sspec_z))
     
     sspec_z_disp = (sspec_z - z_range[0]) / (z_range[1] - z_range[0])
