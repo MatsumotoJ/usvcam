@@ -31,8 +31,6 @@ script_dir = os.path.dirname(__file__)
 config_path = script_dir + '/config.yaml' 
 
 z_range = [2.0, 4.0]
-loc_thr = 2.3   # z value, around 99% in cum dist 
-min_peak_lev = 1.6  # z value, around 95% in cum dist
 
 cam_delay = 0.1
 
@@ -1431,7 +1429,7 @@ def get_sound_spec(fp_dat, t_intv, fs, n_ch, tgt_ch, med=None):
 
     return spec, med
 
-def get_sspec_peaks(sspec, vid_size, vid_mrgn=0, roi=None, only_max=False):
+def get_sspec_peaks(sspec, vid_size, vid_mrgn=0, roi=None, only_max=False, min_peak_lev=1.6):   # z=1.6 means around 95% in cum dist
     
     peaks = None
 
@@ -1561,7 +1559,7 @@ def load_usvsegdata_ss(data_dir):
     
     return seg
 
-def locate_all_segs(data_dir, calibfile, vid_mrgn=100, roi=None, out_sspec=False, color_eq=False, only_max=False):
+def locate_all_segs(data_dir, calibfile, vid_mrgn=100, roi=None, out_sspec=False, color_eq=False, only_max=False, loc_thr=2.3): # z=2.3 means around 99% in cum dist
     
     #with open(config_path, 'r') as f:
     #    usvcam_cfg = yaml.safe_load(f)
