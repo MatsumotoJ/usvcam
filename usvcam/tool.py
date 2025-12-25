@@ -27,6 +27,8 @@ import soundfile
 import io
 import usvseg
 
+from collections import deque
+
 script_dir = os.path.dirname(__file__)
 config_path = script_dir + '/config_fadc.yaml' 
 
@@ -202,7 +204,7 @@ def assign_all_segs(data_dir, calibfile, assignfile, n_mice, conf_thr=0.99):
 
                 snouts = np.reshape(snout_pos[i_frame, :], [-1, 2])
                 tau = get_tau(data_dir, calibfile, speedOfSound, points=snouts)
-                s = calc_seg_power(fp_dat, seg2, tau, fs, n_ch, pressure_calib, return_average=False)
+                s, _ = calc_seg_power(fp_dat, seg2, tau, fs, n_ch, pressure_calib, return_average=False)
 
                 az, el = point2angle(data_dir, calibfile, snouts)
                 snouts_a = np.array([az, el]).T
@@ -471,7 +473,7 @@ def calc_micpos_with_voc(data_dir, SEG, P, calibfile=None, h5f_outpath=None, pos
 
                 tau = get_tau(data_dir, None, speedOfSound, points=pt, micpos=dx)
 
-                S = calc_seg_power(fp_dat, seg2, tau, fs, n_ch, pressure_calib, return_average=True)
+                S, _ = calc_seg_power(fp_dat, seg2, tau, fs, n_ch, pressure_calib, return_average=True)
 
                 pwr[i_seg] = S
 
@@ -622,8 +624,11 @@ def calc_seg_power(fp_dat, seg, tau, fs, n_ch, pressure_calib, return_average=Tr
 
     if return_average:
         S = S/(seg.shape[0]*2)
+        return S, None
+    else:
+        tf_point = np.repeat(seg[:,0:2],2, axis=0)
+        return S, tf_point
 
-    return S
 
 def calc_point_power_gpu(x, f, tau, n_ch):
 
@@ -689,22 +694,63 @@ def calc_sspec_all_frame(data_dir, calibfile, fpath_out, t_end=-1, d=5):
     n_frame = T.shape[0]
     wsize = fs/10
 
+    def calc_mean_S_in_intv(buf, t0, t1):
+        """
+        buf: deque of (tf, S)
+        tf.shape = (m, 2); tf[:,0] is time  
+        S.shape  = (m, X)
+        """
+        S_sum = None
+        count = 0
+
+        for tf, S in buf:
+            I = (tf[:, 0] > t0) & (tf[:, 0] < t1)
+
+            c = np.sum(I)
+            if c == 0:
+                continue
+
+            m = np.sum(S[I, :], axis=0)
+
+            S_sum = m if S_sum is None else (S_sum + m)
+            count += c
+
+        if count == 0:
+            return None, 0
+        
+        return S_sum / count, count
+
+    t_calc_done = 0.0
+    dt_calc = 2.0
+
+    buf = deque()
+
     with h5py.File(fpath_out, mode='w') as fp_out:
         with open_dat(data_dir) as fp_dat:
             for i_frame in tqdm(range(n_frame)):
 
                 t_intv = np.array([T[i_frame,1]-wsize/2, T[i_frame,1]+wsize/2])/fs
-                
-                if t_intv[0] < 0:
-                    continue
-                
-                I = np.logical_and(seg[:,0] > t_intv[0], seg[:,0] < t_intv[1])
-                if np.sum(I) < 3:
-                    continue
-                seg2 = seg[I,:]
 
-                S, peaks = locate_seg(fp_dat, seg2, tau, grid_shape, fs, n_ch, pressure_calib, vid_size)
+                while t_intv[1] > t_calc_done:
+                    #print('calc chunk...')
+                    calc_intv = [t_calc_done, t_calc_done+dt_calc]
+                    I = np.logical_and(seg[:,0] > calc_intv[0], seg[:,0] < calc_intv[1])
+                    if np.sum(I) > 0:
+                        seg2 = seg[I,:]
+                        S, tf = calc_seg_power(fp_dat, seg2, tau, fs, n_ch, pressure_calib, return_average=False)
+                        #S = np.reshape(S, (-1, grid_shape[0], grid_shape[1]))
+                        buf.append((tf, S))
 
+                    t_calc_done += dt_calc
+                    #print('done')
+                
+                while len(buf) > 3:
+                    buf.popleft()       # delete old memory
+
+                S, n_used = calc_mean_S_in_intv(buf, t_intv[0], t_intv[1])
+                if n_used < 3 * 2: # should include >= 3 points in seg
+                    continue
+                S = np.reshape(S, grid_shape)
                 fp_out.create_dataset('/sspec/' + '/{:06}'.format(i_frame), data = S)
 
 def calc_vm_stats(data_dir, calibfile, roi=None, iter_id=None):
@@ -744,7 +790,7 @@ def calc_vm_stats(data_dir, calibfile, roi=None, iter_id=None):
     def get_power_at_vm(data_dir, calibfile, seg2, fs, n_ch, pressure_calib, D, snout_pos, roi, speedOfSound, stft_data):
         angles, pts = gen_rand_points(data_dir, calibfile, D, snout_pos, roi)
         tau = get_tau(data_dir, calibfile, speedOfSound, points=pts)  
-        s = calc_seg_power(None, seg2, tau, fs, n_ch, pressure_calib, return_average=False, stft_data=stft_data)
+        s, _ = calc_seg_power(None, seg2, tau, fs, n_ch, pressure_calib, return_average=False, stft_data=stft_data)
         return s
 
     with h5py.File(fpath_out, mode='w') as fp_out:
@@ -1634,7 +1680,7 @@ def locate_all_segs(data_dir, calibfile, vid_mrgn=100, roi=None, out_sspec=False
 
 def locate_seg(fp_dat, seg, tau, grid_shape, fs, n_ch, pressure_calib, vid_size, vid_mrgn=0, roi=None, only_max=False):
     
-    S = calc_seg_power(fp_dat, seg, tau, fs, n_ch, pressure_calib, return_average=True)
+    S, _ = calc_seg_power(fp_dat, seg, tau, fs, n_ch, pressure_calib, return_average=True)
 
     S = np.reshape(S, grid_shape)
 
