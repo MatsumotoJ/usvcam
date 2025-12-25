@@ -20,6 +20,3 @@ sound_pressure_calibration:         # pressure calibration of each microphone ch
 - 1.0
 - 1.0
 - 1.0
-
-# analysis setting
-use_gpu: false                      # whether gpu is used for spatial spectrum computation

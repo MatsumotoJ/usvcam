@@ -35,12 +35,20 @@ config_path = script_dir + '/config_fadc.yaml'
 
 cam_delay = 0.1
 
-with open(config_path, 'r') as f:
-    usvcam_cfg = yaml.safe_load(f)
-usegpu = usvcam_cfg['use_gpu']
-if usegpu:
+usegpu = False
+cupy = None
+
+def enable_gpu():
     print('gpu calculation enabled')
-    import cupy
+    global usegpu, cupy
+    usegpu = True
+    import cupy as cp
+    cupy = cp
+
+def disable_gpu():
+    print('gpu calculation disabled')
+    global usegpu
+    usegpu = False
 
 def open_dat(data_dir):
 

@@ -5,6 +5,12 @@ import yaml
 
 from . import tool
 
+def enable_gpu():
+    tool.enable_gpu()
+
+def disable_gpu():
+    tool.disable_gpu()
+
 def assign_vocalizations(data_dir, calibfile, assignfile, n_mice, conf_thr=0.99, gap_min=0.03):
     
     print("cleaning data directory...")
