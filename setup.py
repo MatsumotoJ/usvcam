@@ -22,9 +22,11 @@ setuptools.setup(
     ],
     entry_points={
         'console_scripts': [
-            'rec=usvcam.recorder:main', 
+            'rec=usvcam.recorder_fadc:main', 
+            'rec_legacy=usvcam.recorder_legacy:main', 
             'config=usvcam.open_config:main', 
+            'config_legacy=usvcam.open_config:main_legacy', 
             ]
     },
-    package_data={"usvcam": ["*.yaml"]}
+    package_data={"usvcam": ["*.yaml", "*.dll",]}
 )

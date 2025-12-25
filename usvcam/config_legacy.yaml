@@ -1,6 +1,6 @@
 # recording parameters
 color_mode: 0                       # 0:IR, 1:RGB
-laser_power: 0.0                    # IR laser power
+laser_power: 300.0                  # IR laser power
 record_depth: false                 # if record depth images
 daq_dev_name: Dev1                  # DAQ device name
 daq_fs: 384000                      # DAQ sampling frequency
@@ -16,6 +16,3 @@ sound_pressure_calibration:         # pressure calibration of each microphone ch
 - 0.63
 - 0.6
 - 0.63
-
-# analysis setting
-use_gpu: false                      # whether gpu is used for spatial spectrum computation

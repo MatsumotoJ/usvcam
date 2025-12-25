@@ -23,7 +23,7 @@ import yaml
 from . import tool
 
 script_dir = os.path.dirname(__file__)
-config_path = script_dir + '/config.yaml' 
+config_path = script_dir + '/config_legacy.yaml' 
 
 def rs_start(color_mode, laser_power):
 

@@ -1,0 +1,25 @@
+# recording parameters
+color_mode: 0                       # 0:IR, 1:RGB
+laser_power: 300.0                  # IR laser power
+record_depth: false                 # if record depth images
+#daq_dev_name: Dev1                 # DAQ device name
+#daq_fs: 384000                     # DAQ sampling frequency
+ch_monitor: 0                       # DAQ ch number for realtime monitoring
+mic0pos:                            # microphone (ch:0) position (mm) relative to the L515 depth sensor center
+- 20.0                              # x
+- 40.0                              # y; up -> minus, down -> plus
+- 0.0                               # z (depth)
+camera_height: 0.5                  # camera height from the cage floor(m), check using realsense viewer
+speed_of_sound: 343                 # speed of sound (m/sec)
+sound_pressure_calibration:         # pressure calibration of each microphone ch
+- 1.0
+- 1.0
+- 1.0
+- 1.0
+- 1.0
+- 1.0
+- 1.0
+- 1.0
+
+# analysis setting
+use_gpu: false                      # whether gpu is used for spatial spectrum computation

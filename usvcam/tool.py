@@ -28,7 +28,7 @@ import io
 import usvseg
 
 script_dir = os.path.dirname(__file__)
-config_path = script_dir + '/config.yaml' 
+config_path = script_dir + '/config_fadc.yaml' 
 
 
 cam_delay = 0.1
@@ -492,6 +492,7 @@ def calc_micpos_with_voc(data_dir, SEG, P, calibfile=None, h5f_outpath=None, pos
                 plt.plot(xx[:,0], xx[:,1], 'o')
                 plt.xlim(pos_lim[0][0], pos_lim[1][0])
                 plt.ylim(pos_lim[0][1], pos_lim[1][1])
+                plt.gca().set_box_aspect((pos_lim[1][1] - pos_lim[0][1]) / (pos_lim[1][0] - pos_lim[0][0]))
                 plt.show()
 
             Nfeval += 1
