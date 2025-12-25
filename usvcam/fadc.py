@@ -33,9 +33,16 @@ from enum import IntEnum
 
 script_dir = os.path.dirname(__file__)
 os.add_dll_directory(script_dir)
-#lib=ctypes.WinDLL('fadcd3xx.dll')
+
+#####################################################
+"""
+This part was modified by jumpei matsumoto @ univ of 
+toyama for installation with pip.
+"""
+#lib=ctypes.WinDLL('fadcd3xx.dll')  
 script_dir = os.path.dirname(__file__)
 lib=ctypes.WinDLL(script_dir + '/fadcd3xx.dll')
+#####################################################
 
 class FT_STATUS(IntEnum):
     FT_OK = 0
