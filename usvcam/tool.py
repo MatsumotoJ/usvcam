@@ -142,6 +142,113 @@ def angle2point(data_dir, calibfile, azimuth, elevation):
 
     return Px
 
+def assign_all_segs_simple(data_dir, calibfile, assignfile, conf_thr=0.99, d_max=10):
+    """
+    This algorithm is considered beta.
+    It is grounded in existing literature, but the present method and its
+    implementation have not yet been subject to peer review.
+    """
+
+    paramfile = data_dir + '/param.h5'
+    with h5py.File(paramfile, mode='r') as f:    
+        fs = f['/daq_param/fs'][()]
+        n_ch = f['/daq_param/n_ch'][()]
+        speedOfSound = f['/misc/speedOfSound'][()]
+        pressure_calib = f['/misc/pressure_calib'][()]
+
+    T = np.genfromtxt(data_dir + '/sync.csv', delimiter=',')
+
+    loc = np.genfromtxt(data_dir + '/loc.csv', delimiter=',')
+    if loc.ndim == 1:
+        loc = np.reshape(loc, [1, -1])
+
+    snout_pos = np.genfromtxt(data_dir + '/snout.csv', delimiter=',')
+    n_mice = int(snout_pos.shape[1]/2)
+    snout_pos = snout_pos[:,:n_mice*2]
+
+    with h5py.File(assignfile, mode='r') as f:   
+        a = f['/a'][()]
+        b = f['/b'][()]
+        fitted_model = ErrDensityModel(a, b)
+
+    seg = load_usvsegdata_ss(data_dir)
+    _, I_ss = np.unique(seg[:,3:5], axis=0, return_inverse=True)
+
+    mask = None
+    if os.path.exists(data_dir + '/mask.csv'):
+        mask = np.loadtxt(data_dir + '/mask.csv', delimiter=',')
+        print('mask data is found', flush=True)
+        tree_mask1 = intervaltree.IntervalTree.from_tuples(mask[mask[:,2]==1,:2])
+        tree_mask2 = intervaltree.IntervalTree.from_tuples(mask[mask[:,2]==2,:2])
+
+    outdata = []
+
+    for i_ss in tqdm(range(np.max(I_ss)+1)):
+
+        seg2 = seg[I_ss==i_ss,:]
+        i_frame = time2vidframe(data_dir, (np.min(seg2[:,0])+np.max(seg2[:,0]))/2, T, fs)
+
+        od = np.zeros([seg2.shape[0], seg2.shape[1]+6])
+        od[:,:] = np.nan
+        od[:,6:] = seg2
+        od[:,0] = i_ss
+
+        peaks = np.reshape(loc[i_ss,3:], [-1, 2])   
+
+        if mask is not None and len(tree_mask2.overlap(np.min(seg2[:,0]), np.max(seg2[:,0]))):
+            od[:,1] = -5 # masked - not being in the time of interest
+
+        elif mask is not None and len(tree_mask1.overlap(np.min(seg2[:,0]), np.max(seg2[:,0]))):
+            od[:,1] = -4 # masked - audible call existing
+        
+        elif np.isnan(peaks[0,0]):
+            od[:,1] = -2 # not localized 
+
+        elif i_frame >= snout_pos.shape[0]:
+            od[:,1] = -3 # no tracking data 
+
+        elif np.sum(np.isnan(snout_pos[i_frame, :])) == 0:  # if snout pos of all rats are detected
+
+            snouts = np.reshape(snout_pos[i_frame, :], [-1, 2])
+            az, el = point2angle(data_dir, calibfile, snouts)
+            snouts_a = rad2deg(np.array([az, el]).T)
+            
+            az, el = point2angle(data_dir, calibfile, peaks)
+            peaks_a = rad2deg(np.array([az, el]).T)
+            
+            D = np.zeros([snouts.shape[0]], dtype=float)
+            D[:] = np.inf
+            for i_mouse, s_a in enumerate(snouts_a):
+
+                d = np.linalg.norm(peaks_a - s_a, axis=1)
+                d = np.nanmin(d)
+                D[i_mouse] = d
+            
+            i_min = np.argmin(D)
+            d_min = D[i_min]
+
+            if d_min > d_max:
+                od[:,1] = -6 # too far from snout
+            else:
+                p = fitted_model(D)
+                mpi = p[i_min] / np.sum(p)
+                if mpi < conf_thr:
+                    od[:,1] = -1 # not assigned (n.s.)
+                else:
+                    od[:,1] = i_min
+
+                od[:,3] = mpi
+                od[:,4] = np.nan
+                od[:,5] = np.nan
+
+        else:
+            od[:,1] = -3 # no tracking data 
+
+        outdata.append(od)
+
+    np.savetxt(data_dir + '/assign.csv', np.concatenate(outdata, axis=0), delimiter=',',
+                header=' segment_id,1st_place_mouse,2nd_place_mouse,confidence,snout_distance,p_value,time,freq,ampitude,ID_B,ID_A')
+
 def assign_all_segs(data_dir, calibfile, assignfile, n_mice, conf_thr=0.99):
 
     #with open(config_path, 'r') as f:
@@ -859,6 +966,7 @@ def create_assignment_video(data_dir, n_mice, color_eq=False):
         audiblewavfile = glob.glob(data_dir + '/*.audible.flac')
     audiblewavfile = audiblewavfile[0]
     
+    os.makedirs('./tmp', exist_ok=True)
     tmpvidfile = './tmp/tmp.mp4'
 
     print('making video with assignment...')
@@ -1307,6 +1415,172 @@ def draw_spec_on_vidframe(sspec, frame, vid_mrgn=0, color_eq=False, only_max=Fal
     
     return img3
 
+class ErrDensityModel:
+    def __init__(self, a, b):
+        self.a = a
+        self.b = b
+
+    @staticmethod
+    def func(x, a, b):
+        return a * np.exp(-x**2 * (0.5 / b**2))
+    
+    def __call__(self, x, scale=True):
+        return self.func(x, self.a, self.b)
+
+def estimate_assign_param_simple(data_dirs, calib_files, outfile, d_max=10, bin_count=200, show_figs=True):
+    """
+    This algorithm is considered beta.
+    It is grounded in existing literature, but the present method and its
+    implementation have not yet been subject to peer review.
+    """
+    
+    ####### get list of [snout pos, sspec peak pos] (X)
+    X = []
+
+    for i_data, data_dir in enumerate(data_dirs): 
+
+        snout_pos = np.genfromtxt(data_dir + '/snout.csv', delimiter=',')
+        loc_data = np.genfromtxt(data_dir + '/loc.csv', delimiter=',', skip_header=1)
+
+        calib_file = calib_files[i_data]
+
+        """
+        for ld in loc_data:
+            i_frame = int(ld[2])
+            p = ld[3:5]
+
+            p_s = snout_pos[i_frame,:]
+
+            if np.isnan(p_s[0]):
+                continue
+
+            if np.isnan(p[0]):
+                continue
+
+            p = np.reshape(p, [1,2])
+            p_s = np.reshape(p_s, [1,2])
+
+            p_az, p_el = point2angle(data_dir, calib_file, p)
+            p_s_az, p_s_el = point2angle(data_dir, calib_file, p_s)
+
+            x = [rad2deg(p_az), rad2deg(p_el), rad2deg(p_s_az), rad2deg(p_s_el)]
+            X.append(x)
+        """
+
+        for ld in loc_data:
+
+            i_frame = int(ld[2])
+
+            p = np.reshape(ld[3:], [-1, 2])
+
+            p_s = snout_pos[i_frame,:]
+
+            if np.isnan(p_s[0]):
+                continue
+
+            if np.isnan(p[0,0]):
+                continue
+
+            p_s = np.reshape(p_s, [1,2])
+
+            p_az, p_el = point2angle(data_dir, calib_file, p)
+            p_s_az, p_s_el = point2angle(data_dir, calib_file, p_s)
+
+            p_angle = np.array([p_az, p_el]).T
+            p_s_angle = np.array([p_s_az, p_s_el]).T
+
+            d = p_angle - p_s_angle
+            d = np.sqrt(np.sum(d**2, axis=1))
+            i_peak = np.nanargmin(d)
+            x = [rad2deg(p_az[i_peak]), rad2deg(p_el[i_peak]), rad2deg(p_s_az[0]), rad2deg(p_s_el[0])]
+            X.append(x)
+
+    X = np.squeeze(np.array(X))
+
+    ##### calculate relative position (error) and estimate the error distribution 
+    RP = []
+    for i_data in range(X.shape[0]):
+        rp = X[i_data, 0:2] - X[i_data, 2:4]
+        RP.append(rp)
+    RP = np.array(RP)
+
+    D = np.linalg.norm(RP, axis=1)
+
+    I = D < d_max
+    
+    D = D[I]
+    RP = RP[I,:]
+
+    dd = d_max/20
+
+    # Define bin edges
+    D_sorted = np.sort(D)
+    cut_idx = np.arange(bin_count, D_sorted.size, bin_count)
+    eds = np.r_[D_sorted[0], D_sorted[cut_idx], D_sorted[-1]]
+    i = np.searchsorted(eds, d_max, side="right")
+    eds = eds[:i+1]
+
+    # Histogram counts
+    C, _ = np.histogram(D, bins=eds)
+
+    # Compute areas
+    A = np.pi * (eds ** 2)
+    A = np.diff(A)
+
+    # Density calculation
+    density = C / A
+
+    # Midpoints of bins
+    x = (eds[:-1] + eds[1:]) / 2
+
+    y = density / np.sum(density)
+
+    # Fit model definition
+    def model_func(x, a, b):
+        return a * np.exp(-x**2 * (0.5 / b**2))
+
+    # Fit the data with constraints
+
+    bounds=([0, 0], [np.inf, d_max]) 
+
+    popt, pcov = scipy.optimize.curve_fit(
+        ErrDensityModel.func,
+        x,
+        y,
+        bounds=bounds,
+        method='trf'  # Trust Region Reflective algorithm suitable for bounded problems
+    )
+
+    a, b = popt
+    fitted_model = ErrDensityModel(a,b)
+
+    if show_figs:
+        # Create finer x for smooth plotting
+        xx = np.arange(0, d_max, 0.1)
+        yy = fitted_model(xx)
+
+        # Plot original density points
+        plt.figure(figsize=(8, 6))
+        plt.plot(x, density, 'o', label='Data')
+
+        # Plot the fitted curve scaled back
+        plt.plot(xx, yy * np.sum(density), label='Fit')
+        plt.xlabel('Distance (deg)')
+        plt.ylabel('Density (1/deg^2)')
+        plt.legend()
+        plt.grid(True)
+        plt.show()
+
+    print('median error = {:f} deg, N of segments = {:d}'.format(np.median(D), D.shape[0]))
+
+    with h5py.File(outfile, mode='w') as f_out:
+        f_out.create_dataset('/model', data = 'simple')
+        f_out.create_dataset('/a', data = a)
+        f_out.create_dataset('/b', data = b)
+    
+    print(a, b)
+    print('done')
+    
 def estimate_assign_param(data_dirs, calibfiles, outfile, n_trial=7, iter_ids=None, show_figs=True):
 
     with h5py.File(outfile, mode='w') as f_out:
