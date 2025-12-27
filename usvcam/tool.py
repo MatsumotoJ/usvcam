@@ -36,9 +36,19 @@ config_path = script_dir + '/config_fadc.yaml'
 
 cam_delay_default = 0.1
 v_fps_default = 30
+only_max_default = True
 
 usegpu = False
 cupy = None
+
+def set_default_analysis_params_for_device(dev_name):
+    global only_max_default
+    if dev_name == 'legacy4ch':  # for device used in Matsumoto et al. 2022, iScience, 
+        only_max_default = False
+    elif dev_name == 'katou8ch': # for BSA-USVCAM0808 by Katou Acoustics Consultant Office
+        only_max_default = True
+    else:
+        raise ValueError(f'Unknown device name: {dev_name}')
 
 def enable_gpu():
     print('gpu calculation enabled')
@@ -898,7 +908,10 @@ def create_assignment_video(data_dir, n_mice, color_eq=False, min_dist=2.0):
 
     print('done')
 
-def create_localization_video(data_dir, calibfile, t_end=-1, color_eq=False, only_max=True, min_peak_lev=1.6):
+def create_localization_video(data_dir, calibfile, t_end=-1, color_eq=False, only_max=None, min_peak_lev=1.6):
+    
+    if only_max is None:
+        only_max = only_max_default
 
     audiblewavfile = glob.glob(data_dir + '/*.audible.wav')
     if len(audiblewavfile) == 0:
@@ -1210,8 +1223,11 @@ def draw_assign_on_all_vidframe(fpath_out, data_dir, n_mice, conf_thr=0.99, colo
     vw.release()
     vr.release()
 
-def draw_spect_on_all_vidframe(fpath_out, data_dir, sspecfile, t_end=-1, color_eq=False, only_max=True, min_peak_lev=1.6):
+def draw_spect_on_all_vidframe(fpath_out, data_dir, sspecfile, t_end=-1, color_eq=False, only_max=None, min_peak_lev=1.6):
     
+    if only_max is None:
+        only_max = only_max_default
+
     spect_height = 100
 
     with open(config_path, 'r') as f:
@@ -1299,7 +1315,10 @@ def draw_spect_on_all_vidframe(fpath_out, data_dir, sspecfile, t_end=-1, color_e
     vw.release()
     vr.release()
 
-def draw_spec_on_vidframe(sspec, frame, vid_mrgn=0, color_eq=False, only_max=True, z_range=None, min_peak_lev=1.6):
+def draw_spec_on_vidframe(sspec, frame, vid_mrgn=0, color_eq=False, only_max=None, z_range=None, min_peak_lev=1.6):
+    
+    if only_max is None:
+        only_max = only_max_default
 
     sspec_z = (sspec - np.mean(sspec)) / np.std(sspec)
 
@@ -1672,8 +1691,11 @@ def get_sound_spec(fp_dat, t_intv, fs, n_ch, tgt_ch, med=None):
 
     return spec, med
 
-def get_sspec_peaks(sspec, vid_size, vid_mrgn=0, roi=None, only_max=True, min_peak_lev=1.6):   # z=1.6 means around 95% in cum dist
-    
+def get_sspec_peaks(sspec, vid_size, vid_mrgn=0, roi=None, only_max=None, min_peak_lev=1.6):   # z=1.6 means around 95% in cum dist
+        
+    if only_max is None:
+        only_max = only_max_default
+
     peaks = None
 
     if only_max:
@@ -1802,8 +1824,11 @@ def load_usvsegdata_ss(data_dir):
     
     return seg
 
-def locate_all_segs(data_dir, calibfile, vid_mrgn=100, roi=None, out_sspec=False, color_eq=False, only_max=True, loc_thr=2.3, min_peak_lev=1.6): # z=2.3 means around 99% in cum dist
-    
+def locate_all_segs(data_dir, calibfile, vid_mrgn=100, roi=None, out_sspec=False, color_eq=False, only_max=None, loc_thr=2.3, min_peak_lev=1.6): # z=2.3 means around 99% in cum dist
+        
+    if only_max is None:
+        only_max = only_max_default
+
     #with open(config_path, 'r') as f:
     #    usvcam_cfg = yaml.safe_load(f)
     #speedOfSound = float(usvcam_cfg['speed_of_sound'])
@@ -1873,8 +1898,11 @@ def locate_all_segs(data_dir, calibfile, vid_mrgn=100, roi=None, out_sspec=False
     np.savetxt(data_dir + '/loc.csv', rslt, delimiter=',',
                 header=' ID_A,ID_B,video_frame,peak_locations (x1-y1-x2-y2-...),')
 
-def locate_seg(fp_dat, seg, tau, grid_shape, fs, n_ch, pressure_calib, vid_size, vid_mrgn=0, roi=None, only_max=True, min_peak_lev=1.6):
-    
+def locate_seg(fp_dat, seg, tau, grid_shape, fs, n_ch, pressure_calib, vid_size, vid_mrgn=0, roi=None, only_max=None, min_peak_lev=1.6):
+        
+    if only_max is None:
+        only_max = only_max_default
+        
     S, _ = calc_seg_power(fp_dat, seg, tau, fs, n_ch, pressure_calib, return_average=True)
 
     S = np.reshape(S, grid_shape)
