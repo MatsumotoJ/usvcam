@@ -33,7 +33,7 @@ script_dir = os.path.dirname(__file__)
 config_path = script_dir + '/config_fadc.yaml' 
 
 
-cam_delay = 0.1
+cam_delay_default = 0.1
 
 usegpu = False
 cupy = None
@@ -155,6 +155,10 @@ def assign_all_segs_simple(data_dir, calibfile, assignfile, conf_thr=0.99, d_max
         n_ch = f['/daq_param/n_ch'][()]
         speedOfSound = f['/misc/speedOfSound'][()]
         pressure_calib = f['/misc/pressure_calib'][()]
+        if '/camera_param/cam_delay' in f:
+            cam_delay = f['/camera_param/cam_delay']
+        else:
+            cam_delay = cam_delay_default
 
     T = np.genfromtxt(data_dir + '/sync.csv', delimiter=',')
 
@@ -186,7 +190,7 @@ def assign_all_segs_simple(data_dir, calibfile, assignfile, conf_thr=0.99, d_max
     for i_ss in tqdm(range(np.max(I_ss)+1)):
 
         seg2 = seg[I_ss==i_ss,:]
-        i_frame = time2vidframe(data_dir, (np.min(seg2[:,0])+np.max(seg2[:,0]))/2, T, fs)
+        i_frame = time2vidframe(data_dir, (np.min(seg2[:,0])+np.max(seg2[:,0]))/2, T, fs, cam_delay)
 
         od = np.zeros([seg2.shape[0], seg2.shape[1]+6])
         od[:,:] = np.nan
@@ -262,6 +266,10 @@ def assign_all_segs(data_dir, calibfile, assignfile, n_mice, conf_thr=0.99):
         n_ch = f['/daq_param/n_ch'][()]
         speedOfSound = f['/misc/speedOfSound'][()]
         pressure_calib = f['/misc/pressure_calib'][()]
+        if '/camera_param/cam_delay' in f:
+            cam_delay = f['/camera_param/cam_delay']
+        else:
+            cam_delay = cam_delay_default
 
     T = np.genfromtxt(data_dir + '/sync.csv', delimiter=',')
 
@@ -297,7 +305,7 @@ def assign_all_segs(data_dir, calibfile, assignfile, n_mice, conf_thr=0.99):
 
             seg2 = seg[I_ss==i_ss,:]
 
-            i_frame = time2vidframe(data_dir, (np.min(seg2[:,0])+np.max(seg2[:,0]))/2, T, fs)
+            i_frame = time2vidframe(data_dir, (np.min(seg2[:,0])+np.max(seg2[:,0]))/2, T, fs, cam_delay)
 
             od = np.zeros([seg2.shape[0], seg2.shape[1]+6])
             od[:,:] = np.nan
@@ -886,6 +894,10 @@ def calc_vm_stats(data_dir, calibfile, roi=None, iter_id=None):
         im_h = f['/camera_param/color_intrin/height'][()]
         speedOfSound = f['/misc/speedOfSound'][()]
         pressure_calib = f['/misc/pressure_calib'][()]
+        if '/camera_param/cam_delay' in f:
+            cam_delay = f['/camera_param/cam_delay']
+        else:
+            cam_delay = cam_delay_default
 
     T = np.genfromtxt(data_dir + '/sync.csv', delimiter=',')
 
@@ -917,7 +929,7 @@ def calc_vm_stats(data_dir, calibfile, roi=None, iter_id=None):
 
                 seg2 = seg[I_ss==i_ss,:]
 
-                i_frame = time2vidframe(data_dir, (np.min(seg2[:,0])+np.max(seg2[:,0]))/2, T, fs)
+                i_frame = time2vidframe(data_dir, (np.min(seg2[:,0])+np.max(seg2[:,0]))/2, T, fs, cam_delay)
 
                 if np.isnan(snout_pos[i_frame, 0]):
                     continue
@@ -1161,6 +1173,10 @@ def draw_assign_on_all_vidframe(fpath_out, data_dir, n_mice, conf_thr=0.99, colo
         fs = f['/daq_param/fs'][()]
         n_ch = f['/daq_param/n_ch'][()]
         n_ch = n_ch.astype(np.int64)
+        if '/camera_param/cam_delay' in f:
+            cam_delay = f['/camera_param/cam_delay']
+        else:
+            cam_delay = cam_delay_default
 
     snout_pos = np.genfromtxt(data_dir + '/snout.csv', delimiter=',')
 
@@ -1302,6 +1318,10 @@ def draw_spect_on_all_vidframe(fpath_out, data_dir, sspecfile, t_end=-1, color_e
         fs = f['/daq_param/fs'][()]
         n_ch = f['/daq_param/n_ch'][()]
         n_ch = n_ch.astype(np.int64)
+        if '/camera_param/cam_delay' in f:
+            cam_delay = f['/camera_param/cam_delay']
+        else:
+            cam_delay = cam_delay_default
 
     if t_end > 0:
         I = T[:,1]/fs < t_end
@@ -1433,7 +1453,7 @@ def estimate_assign_param_simple(data_dirs, calib_files, outfile, d_max=10, bin_
     It is grounded in existing literature, but the present method and its
     implementation have not yet been subject to peer review.
     """
-    
+
     ####### get list of [snout pos, sspec peak pos] (X)
     X = []
 
@@ -1908,6 +1928,10 @@ def locate_all_segs(data_dir, calibfile, vid_mrgn=100, roi=None, out_sspec=False
         im_h = f['/camera_param/color_intrin/height'][()]
         speedOfSound = f['/misc/speedOfSound'][()]
         pressure_calib = f['/misc/pressure_calib'][()]
+        if '/camera_param/cam_delay' in f:
+            cam_delay = f['/camera_param/cam_delay']
+        else:
+            cam_delay = cam_delay_default
 
     vid_size = [im_w, im_h]
 
@@ -1933,7 +1957,7 @@ def locate_all_segs(data_dir, calibfile, vid_mrgn=100, roi=None, out_sspec=False
 
             seg2 = seg[I_ss==i_ss,:]
 
-            i_frame = time2vidframe(data_dir, (np.min(seg2[:,0])+np.max(seg2[:,0]))/2, T, fs)
+            i_frame = time2vidframe(data_dir, (np.min(seg2[:,0])+np.max(seg2[:,0]))/2, T, fs, cam_delay)
             
             S, peaks = locate_seg(fp_dat, seg2, tau, grid_shape, fs, n_ch, pressure_calib, vid_size, vid_mrgn=vid_mrgn, roi=roi, only_max=only_max)
             
@@ -2084,6 +2108,10 @@ def pick_seg_for_calib(data_dir, n_pos_check=20):
     with h5py.File(paramfile, mode='r') as f:    
         fs = f['/daq_param/fs'][()]
         n_ch = f['/daq_param/n_ch'][()]
+        if '/camera_param/cam_delay' in f:
+            cam_delay = f['/camera_param/cam_delay']
+        else:
+            cam_delay = cam_delay_default
 
     T = np.genfromtxt(data_dir + '/sync.csv', delimiter=',')
 
@@ -2100,7 +2128,7 @@ def pick_seg_for_calib(data_dir, n_pos_check=20):
         seg2 = seg[I_ss==i_ss,:]
         mrgn = 0.01
         t_intv = [np.min(seg2[:,0]) - mrgn, np.max(seg2[:,0]) + mrgn]
-        i_frame = time2vidframe(data_dir, (np.min(seg2[:,0])+np.max(seg2[:,0]))/2, T, fs)
+        i_frame = time2vidframe(data_dir, (np.min(seg2[:,0])+np.max(seg2[:,0]))/2, T, fs, cam_delay)
         snout_pos_voc[i_ss,:] = snout_pos[i_frame, :]
 
     I_notnan = np.logical_not(np.isnan(snout_pos_voc[:, 0]))
@@ -2154,6 +2182,10 @@ def pick_seg_for_calib_manual(data_dir):
     with h5py.File(paramfile_path, mode='r') as f:
         fs = f['/daq_param/fs'][()]
         n_ch = f['/daq_param/n_ch'][()]
+        if '/camera_param/cam_delay' in f:
+            cam_delay = f['/camera_param/cam_delay']
+        else:
+            cam_delay = cam_delay_default
 
     T = np.genfromtxt(syncfile_path, delimiter=',')
 
@@ -2196,7 +2228,7 @@ def pick_seg_for_calib_manual(data_dir):
     p_crnt[:] = np.nan
     for i_ss in range(n_ss):
         seg2 = seg[I_ss == i_ss, :]
-        i_frame = time2vidframe(data_dir, (np.min(seg2[:, 0]) + np.max(seg2[:, 0])) / 2, T, fs)
+        i_frame = time2vidframe(data_dir, (np.min(seg2[:, 0]) + np.max(seg2[:, 0])) / 2, T, fs, cam_delay)
         vr.set(cv2.CAP_PROP_POS_FRAMES, i_frame)
         ret, frame = vr.read()
 
@@ -2297,7 +2329,7 @@ def point2angle(data_dir, calibfile, points):
 def rad2deg(th):
     return th/np.pi*180
 
-def time2vidframe(data_dir, t, T, fs):
+def time2vidframe(data_dir, t, T, fs, cam_delay):
     # T: sync.csv
 
     TT = T[:,1]/fs
