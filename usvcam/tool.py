@@ -26,6 +26,8 @@ import matplotlib.pyplot as plt
 import soundfile
 import io
 import usvseg
+from pathlib import Path
+from datetime import datetime
 
 from collections import deque
 
@@ -50,6 +52,36 @@ def disable_gpu():
     print('gpu calculation disabled')
     global usegpu
     usegpu = False
+
+def change_param_h5(data_dir, key, data):
+    """
+    change param h5 with backup
+    """
+
+    filename = data_dir + '/param.h5'
+
+    src = Path(filename)
+    bak_dir = src.parent / "bak"
+    bak_dir.mkdir(exist_ok=True)
+
+    ts = datetime.now().strftime("%Y%m%d_%H%M%S")
+    # Example: data.h5 -> bak/data.20251227_153012.h5
+    dst = bak_dir / f"{src.stem}.{ts}{src.suffix}"
+
+    # Safety check in case multiple backups are created within the same second
+    i = 1
+    while dst.exists():
+        dst = bak_dir / f"{src.stem}.{ts}_{i:02d}{src.suffix}"
+        i += 1
+
+    # Back up the original file (raises if the source file does not exist)
+    shutil.copy2(src, dst)
+
+    # Replace the dataset
+    with h5py.File(src, "a") as f:
+        if key in f:
+            del f[key]
+        f.create_dataset(key, data=data)
 
 def open_dat(data_dir):
 
