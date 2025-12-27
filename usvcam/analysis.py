@@ -2,6 +2,7 @@ import usvseg
 import glob
 import os
 import yaml
+import shutil
 
 from . import tool
 
@@ -91,5 +92,9 @@ def run_usvseg(data_dir, usvseg_prm_file):
     savefp = os.path.splitext(fp)[0] + '.usvseg_dat.csv'
     outp = data_dir + '/seg'
     fname_audiblewav = os.path.splitext(fp)[0] + '.audible.flac'
+
+    # clean seg folder to avoid contamination with the previous calculation results
+    if os.path.exists(outp):
+        shutil.rmtree(outp)
 
     usvseg.proc_wavfile(params, fp, savefp, outp, fname_audiblewav=fname_audiblewav, usvcamflg=True)
