@@ -11,7 +11,7 @@ def enable_gpu():
 def disable_gpu():
     tool.disable_gpu()
 
-def assign_vocalizations(data_dir, calibfile, assignfile, n_mice, conf_thr=0.99, gap_min=0.03, only_max=True, loc_thr=2.3, min_peak_lev=1.6):
+def assign_vocalizations(data_dir, calibfile, assignfile, n_mice, conf_thr=0.99, gap_min=0.03, only_max=True, loc_thr=2.3, min_peak_lev=1.6, min_dist=2.0):
     
     print("cleaning data directory...")
     tool.clean_data_dir(data_dir, filekeep=['vid.loc.mp4', 'vmstat.*.h5'])
@@ -31,7 +31,7 @@ def assign_vocalizations(data_dir, calibfile, assignfile, n_mice, conf_thr=0.99,
     tool.assign_all_segs(data_dir, calibfile, assignfile, n_mice, conf_thr=conf_thr)
 
     print('merge assigned segments...')
-    tool.merge_assigned_segs(data_dir, n_mice, gap_min=gap_min)
+    tool.merge_assigned_segs(data_dir, n_mice, gap_min=gap_min, min_dist=min_dist)
     
     print('done.')
 
@@ -64,11 +64,11 @@ def estimate_assign_param(data_dirs, calibfiles, assignfile, n_iter=8, n_trial=7
     print("estimating parameters for assignment...")
     tool.estimate_assign_param(data_dirs, calibfiles, assignfile, n_trial=n_trial, iter_ids=list(range(n_iter)), show_figs=show_figs)
 
-def create_assignment_video(data_dir, n_mice, color_eq=False):
+def create_assignment_video(data_dir, n_mice, color_eq=False, min_dist=2.0):
     if not os.path.exists(data_dir + '/assign.csv'):
         print('--NO ASSIGNED USV SEGMENT ')
         return
-    tool.create_assignment_video(data_dir, n_mice, color_eq=color_eq)
+    tool.create_assignment_video(data_dir, n_mice, color_eq=color_eq, min_dist=min_dist)
 
 def create_localization_video(data_dir, calibfile, t_end=-1, color_eq=False, only_max=True, min_peak_lev=1.6):
     tool.create_localization_video(data_dir, calibfile, t_end=t_end, color_eq=color_eq, only_max=only_max, min_peak_lev=min_peak_lev)

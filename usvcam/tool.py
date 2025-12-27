@@ -1002,7 +1002,7 @@ def clean_data_dir(data_dir, filekeep=[]):
         for fn in L:
             os.remove(fn)
 
-def create_assignment_video(data_dir, n_mice, color_eq=False):
+def create_assignment_video(data_dir, n_mice, color_eq=False, min_dist=2.0):
 
     audiblewavfile = glob.glob(data_dir + '/*.audible.wav')
     if len(audiblewavfile) == 0:
@@ -1013,7 +1013,7 @@ def create_assignment_video(data_dir, n_mice, color_eq=False):
     tmpvidfile = './tmp/tmp.mp4'
 
     print('making video with assignment...')
-    draw_assign_on_all_vidframe(tmpvidfile, data_dir, n_mice, color_eq=color_eq)
+    draw_assign_on_all_vidframe(tmpvidfile, data_dir, n_mice, color_eq=color_eq, min_dist=min_dist)
 
     print('combining sound and video...')
     outfile = data_dir + './vid.asgn.mp4'
@@ -1185,7 +1185,7 @@ def detect_bbv(data_dir, thr=1.4):
     mask = np.concatenate([mrg_intv, np.ones([mrg_intv.shape[0],1])], axis=1)
     np.savetxt(data_dir + '/mask.csv', mask, delimiter=',', header='onset, offset, type')
 
-def draw_assign_on_all_vidframe(fpath_out, data_dir, n_mice, conf_thr=0.99, color_eq=False):
+def draw_assign_on_all_vidframe(fpath_out, data_dir, n_mice, conf_thr=0.99, color_eq=False, min_dist=2.0):
 
     spect_height = 100
 
@@ -1224,7 +1224,7 @@ def draw_assign_on_all_vidframe(fpath_out, data_dir, n_mice, conf_thr=0.99, colo
 
     seg = np.genfromtxt(data_dir + '/assign.csv', delimiter=',')
 
-    I = np.logical_or(seg[:,4] <= 2/180*np.pi, seg[:,3] < conf_thr)
+    I = np.logical_or(seg[:,4] <= min_dist/180*np.pi, seg[:,3] < conf_thr)
     seg[I,1] = -1
 
     mask = None
@@ -2029,13 +2029,13 @@ def locate_seg(fp_dat, seg, tau, grid_shape, fs, n_ch, pressure_calib, vid_size,
 
     return S, peaks
      
-def merge_assigned_segs(data_dir, n_mice, gap_min=0.03, conf_thr=0.99):
+def merge_assigned_segs(data_dir, n_mice, gap_min=0.03, conf_thr=0.99, min_dist=2.0):
 
     os.makedirs(data_dir + '/seg2', exist_ok=True)
 
     A = np.genfromtxt(data_dir + '/assign.csv', delimiter=',')
 
-    I = np.logical_or(A[:,4] <= 2/180*np.pi, A[:,3] < conf_thr)
+    I = np.logical_or(A[:,4] <= min_dist/180*np.pi, A[:,3] < conf_thr)
     A[I,1] = -1
 
     n_seg = int(np.max(A[:,0])+1)
