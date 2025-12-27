@@ -11,7 +11,7 @@ def enable_gpu():
 def disable_gpu():
     tool.disable_gpu()
 
-def assign_vocalizations(data_dir, calibfile, assignfile, n_mice, conf_thr=0.99, gap_min=0.03, only_max=True):
+def assign_vocalizations(data_dir, calibfile, assignfile, n_mice, conf_thr=0.99, gap_min=0.03, only_max=True, loc_thr=2.3, min_peak_lev=1.6):
     
     print("cleaning data directory...")
     tool.clean_data_dir(data_dir, filekeep=['vid.loc.mp4', 'vmstat.*.h5'])
@@ -21,7 +21,7 @@ def assign_vocalizations(data_dir, calibfile, assignfile, n_mice, conf_thr=0.99,
         return
 
     print('localize segments...')
-    tool.locate_all_segs(data_dir, calibfile, vid_mrgn=100, only_max=only_max)
+    tool.locate_all_segs(data_dir, calibfile, vid_mrgn=100, only_max=only_max, loc_thr=loc_thr, min_peak_lev=min_peak_lev)
 
     if not os.path.exists(data_dir + '/loc.csv'):
         print('--NO LOCALIZED USV SEGMENT ')
@@ -43,7 +43,7 @@ def calib_with_voc(data_dir, mannual_mode=False, n_sample=20, outpath=None, pos_
     tool.calc_micpos_with_voc(data_dir, SEG, P, calibfile=calibfile, h5f_outpath=outpath, pos_lim=pos_lim, pos_searchlim=pos_searchlim, pos_init=pos_init, vis_progress=vis_progress, ftol=ftol, maxiter=maxiter)
     print('done.')
 
-def estimate_assign_param(data_dirs, calibfiles, assignfile, n_iter=8, n_trial=7, show_figs=False, only_max=True):
+def estimate_assign_param(data_dirs, calibfiles, assignfile, n_iter=8, n_trial=7, show_figs=False, only_max=True, loc_thr=2.3, min_peak_lev=1.6):
     
     n_data = len(data_dirs)
     
@@ -53,7 +53,7 @@ def estimate_assign_param(data_dirs, calibfiles, assignfile, n_iter=8, n_trial=7
 
     print("localizing semgents...")
     for i_data in range(n_data):
-        tool.locate_all_segs(data_dirs[i_data], calibfiles[i_data], only_max=only_max)
+        tool.locate_all_segs(data_dirs[i_data], calibfiles[i_data], only_max=only_max, loc_thr=loc_thr, min_peak_lev=min_peak_lev)
 
     print("calculate stats with virtual mice... (This may take hours)")
     for i_data in range(n_data):
@@ -70,8 +70,8 @@ def create_assignment_video(data_dir, n_mice, color_eq=False):
         return
     tool.create_assignment_video(data_dir, n_mice, color_eq=color_eq)
 
-def create_localization_video(data_dir, calibfile, t_end=-1, color_eq=False, only_max=True):
-    tool.create_localization_video(data_dir, calibfile, t_end=t_end, color_eq=color_eq, only_max=only_max)
+def create_localization_video(data_dir, calibfile, t_end=-1, color_eq=False, only_max=True, min_peak_lev=1.6):
+    tool.create_localization_video(data_dir, calibfile, t_end=t_end, color_eq=color_eq, only_max=only_max, min_peak_lev=min_peak_lev)
 
 def dat2wav(data_dir, i_ch, offset=0):
     tool.dat2wav(data_dir, i_ch, offset)
