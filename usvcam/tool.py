@@ -1023,7 +1023,7 @@ def create_assignment_video(data_dir, n_mice, color_eq=False):
 
     print('done')
 
-def create_localization_video(data_dir, calibfile, t_end=-1, color_eq=False):
+def create_localization_video(data_dir, calibfile, t_end=-1, color_eq=False, only_max=True):
 
     audiblewavfile = glob.glob(data_dir + '/*.audible.wav')
     if len(audiblewavfile) == 0:
@@ -1044,7 +1044,7 @@ def create_localization_video(data_dir, calibfile, t_end=-1, color_eq=False):
     calc_sspec_all_frame(data_dir, calibfile, tmpsspecfile, t_end=t_end)
 
     print('overlay spatial spectrum on video...')
-    draw_spect_on_all_vidframe(tmpvidfile, data_dir, tmpsspecfile, t_end=t_end, color_eq=color_eq)
+    draw_spect_on_all_vidframe(tmpvidfile, data_dir, tmpsspecfile, t_end=t_end, color_eq=color_eq, only_max=only_max)
 
     print('combining sound and video...')
     if t_end > 0:
@@ -1335,7 +1335,7 @@ def draw_assign_on_all_vidframe(fpath_out, data_dir, n_mice, conf_thr=0.99, colo
     vw.release()
     vr.release()
 
-def draw_spect_on_all_vidframe(fpath_out, data_dir, sspecfile, t_end=-1, color_eq=False):
+def draw_spect_on_all_vidframe(fpath_out, data_dir, sspecfile, t_end=-1, color_eq=False, only_max=True):
     
     spect_height = 100
 
@@ -1410,7 +1410,7 @@ def draw_spect_on_all_vidframe(fpath_out, data_dir, sspecfile, t_end=-1, color_e
 
                 if cnt-1 in frame_snd:
                     sspec = f['/sspec/' + '/{:06}'.format(cnt-1)][()]
-                    img = draw_spec_on_vidframe(sspec, frame, color_eq=color_eq)
+                    img = draw_spec_on_vidframe(sspec, frame, color_eq=color_eq, only_max=only_max)
                     frame_out = np.concatenate([img.astype(np.uint8), spec_show], axis=0)
                     vw.write(frame_out)
                 else:
@@ -1424,7 +1424,7 @@ def draw_spect_on_all_vidframe(fpath_out, data_dir, sspecfile, t_end=-1, color_e
     vw.release()
     vr.release()
 
-def draw_spec_on_vidframe(sspec, frame, vid_mrgn=0, color_eq=False, only_max=False, z_range=None):
+def draw_spec_on_vidframe(sspec, frame, vid_mrgn=0, color_eq=False, only_max=True, z_range=None):
 
     sspec_z = (sspec - np.mean(sspec)) / np.std(sspec)
 
@@ -1821,7 +1821,7 @@ def get_sound_spec(fp_dat, t_intv, fs, n_ch, tgt_ch, med=None):
 
     return spec, med
 
-def get_sspec_peaks(sspec, vid_size, vid_mrgn=0, roi=None, only_max=False, min_peak_lev=1.6):   # z=1.6 means around 95% in cum dist
+def get_sspec_peaks(sspec, vid_size, vid_mrgn=0, roi=None, only_max=True, min_peak_lev=1.6):   # z=1.6 means around 95% in cum dist
     
     peaks = None
 
@@ -1951,7 +1951,7 @@ def load_usvsegdata_ss(data_dir):
     
     return seg
 
-def locate_all_segs(data_dir, calibfile, vid_mrgn=100, roi=None, out_sspec=False, color_eq=False, only_max=False, loc_thr=2.3): # z=2.3 means around 99% in cum dist
+def locate_all_segs(data_dir, calibfile, vid_mrgn=100, roi=None, out_sspec=False, color_eq=False, only_max=True, loc_thr=2.3): # z=2.3 means around 99% in cum dist
     
     #with open(config_path, 'r') as f:
     #    usvcam_cfg = yaml.safe_load(f)
@@ -2002,7 +2002,7 @@ def locate_all_segs(data_dir, calibfile, vid_mrgn=100, roi=None, out_sspec=False
             if out_sspec:
                 vr.set(cv2.CAP_PROP_POS_FRAMES,i_frame)
                 ret, frame = vr.read()
-                img = draw_spec_on_vidframe(S, frame, vid_mrgn=vid_mrgn, color_eq=color_eq)
+                img = draw_spec_on_vidframe(S, frame, vid_mrgn=vid_mrgn, color_eq=color_eq, only_max=only_max)
                 if is_sspec_localized(S, loc_thr):
                     cv2.imwrite(data_dir + '/loc/{:06}-{:03}.jpg'.format(int(seg2[0,4]), int(seg2[0,3])), img)
                 else:
@@ -2022,7 +2022,7 @@ def locate_all_segs(data_dir, calibfile, vid_mrgn=100, roi=None, out_sspec=False
     np.savetxt(data_dir + '/loc.csv', rslt, delimiter=',',
                 header=' ID_A,ID_B,video_frame,peak_locations (x1-y1-x2-y2-...),')
 
-def locate_seg(fp_dat, seg, tau, grid_shape, fs, n_ch, pressure_calib, vid_size, vid_mrgn=0, roi=None, only_max=False):
+def locate_seg(fp_dat, seg, tau, grid_shape, fs, n_ch, pressure_calib, vid_size, vid_mrgn=0, roi=None, only_max=True):
     
     S, _ = calc_seg_power(fp_dat, seg, tau, fs, n_ch, pressure_calib, return_average=True)
 
