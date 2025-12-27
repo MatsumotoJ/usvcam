@@ -20,17 +20,18 @@ script_dir = os.path.dirname(__file__)
 config_path = script_dir + '/config_fadc.yaml' 
 
 cam_delay = 0.1
+v_fps = 30
 
 def rs_start(color_mode, laser_power):
 
     pipe = rs.pipeline()
 
     config = rs.config()
-    config.enable_stream(rs.stream.depth, 640, 480, rs.format.z16, 30)      # depth
+    config.enable_stream(rs.stream.depth, 640, 480, rs.format.z16, v_fps)      # depth
     if color_mode == 0:
-        config.enable_stream(rs.stream.infrared, 640, 480, rs.format.y8, 30)      # IR
+        config.enable_stream(rs.stream.infrared, 640, 480, rs.format.y8, v_fps)      # IR
     elif color_mode == 1:
-        config.enable_stream(rs.stream.color, 640, 480, rs.format.rgb8, 30)    # RGB
+        config.enable_stream(rs.stream.color, 640, 480, rs.format.rgb8, v_fps)    # RGB
     profile = pipe.start(config)
     depth_sensor = profile.get_device().first_depth_sensor()
     #depth_sensor.set_option(rs.option.visual_preset, 5) # short range
@@ -82,9 +83,9 @@ def start_recording(data_dir, color_mode, record_depth, depth_intrin, color_intr
     vid_size = (color_intrin.width, color_intrin.height)
     fmt = cv2.VideoWriter_fourcc('m', 'p', '4', 'v') 
     if color_mode == 0:
-        writer = cv2.VideoWriter(data_dir + '/vid.mp4', fmt, 30, vid_size, isColor=False) 
+        writer = cv2.VideoWriter(data_dir + '/vid.mp4', fmt, v_fps, vid_size, isColor=False) 
     elif color_mode == 1:
-        writer = cv2.VideoWriter(data_dir + '/vid.mp4', fmt, 30, vid_size, isColor=True) 
+        writer = cv2.VideoWriter(data_dir + '/vid.mp4', fmt, v_fps, vid_size, isColor=True) 
 
     # sync between camera and DAQ
     fp_sync = open(data_dir + '/sync.csv', 'w')
@@ -103,6 +104,7 @@ def start_recording(data_dir, color_mode, record_depth, depth_intrin, color_intr
         f.create_dataset('/camera_param/color_mode', data = color_mode)
         f.create_dataset('/camera_param/camera_height', data = camera_height)
         f.create_dataset('/camera_param/cam_delay', data = cam_delay)
+        f.create_dataset('/camera_param/v_fps', data = v_fps)
         f.create_dataset('/daq_param/fs', data = daq_fs)
         f.create_dataset('/daq_param/n_ch', data = daq_n_ch)
         f.create_dataset('/misc/speedOfSound', data=speedOfSound)
@@ -229,7 +231,7 @@ def main():
     cv2.moveWindow('Microphone', 80, 550)
 
     # initialize fps count
-    fps = np.zeros(30)
+    fps = np.zeros(v_fps)
     frames = pipe.wait_for_frames()
     t_pre = frames.get_timestamp()
 

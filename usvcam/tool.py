@@ -34,6 +34,7 @@ config_path = script_dir + '/config_fadc.yaml'
 
 
 cam_delay_default = 0.1
+v_fps_default = 30
 
 usegpu = False
 cupy = None
@@ -1156,7 +1157,6 @@ def detect_bbv(data_dir, thr=1.4):
 
 def draw_assign_on_all_vidframe(fpath_out, data_dir, n_mice, conf_thr=0.99, color_eq=False):
 
-    v_fs = 30
     spect_height = 100
 
     with open(config_path, 'r') as f:
@@ -1177,16 +1177,20 @@ def draw_assign_on_all_vidframe(fpath_out, data_dir, n_mice, conf_thr=0.99, colo
             cam_delay = f['/camera_param/cam_delay']
         else:
             cam_delay = cam_delay_default
+        if '/camera_param/v_fps' in f:
+            v_fps = f['/camera_param/v_fps']
+        else:
+            v_fps = v_fps_default
 
     snout_pos = np.genfromtxt(data_dir + '/snout.csv', delimiter=',')
 
     T[:,1] = T[:,1]/fs
-    t = np.arange(0, T[-10,1], 1/v_fs)
+    t = np.arange(0, T[-10,1], 1/v_fps)
     n_frame = t.shape[0]
 
     vr = cv2.VideoCapture(vid_file)
     fmt = cv2.VideoWriter_fourcc('m', 'p', '4', 'v') 
-    vw = cv2.VideoWriter(fpath_out, fmt, v_fs, (int(vr.get(cv2.CAP_PROP_FRAME_WIDTH)), int(vr.get(cv2.CAP_PROP_FRAME_HEIGHT)+spect_height*2)), isColor=True) 
+    vw = cv2.VideoWriter(fpath_out, fmt, v_fps, (int(vr.get(cv2.CAP_PROP_FRAME_WIDTH)), int(vr.get(cv2.CAP_PROP_FRAME_HEIGHT)+spect_height*2)), isColor=True) 
 
     seg = np.genfromtxt(data_dir + '/assign.csv', delimiter=',')
 
@@ -1265,7 +1269,7 @@ def draw_assign_on_all_vidframe(fpath_out, data_dir, n_mice, conf_thr=0.99, colo
                 spec_show = cv2.addWeighted(spec_show, 0.5, spec_show_masked, 0.5, 0)
                             
             #### draw snout markers
-            t_intv = [t[i_frame]-(1/v_fs/2), t[i_frame]+(1/v_fs/2)]
+            t_intv = [t[i_frame]-(1/v_fps/2), t[i_frame]+(1/v_fps/2)]
             I = np.logical_and(seg[:,6] >= t_intv[0], seg[:,6] <= t_intv[1])
             seg2 = seg[I, :]
             if snout_pos.shape[0] >= cnt:
@@ -1301,8 +1305,6 @@ def draw_assign_on_all_vidframe(fpath_out, data_dir, n_mice, conf_thr=0.99, colo
 
 def draw_spect_on_all_vidframe(fpath_out, data_dir, sspecfile, t_end=-1, color_eq=False):
     
-    v_fs = 30
-
     spect_height = 100
 
     with open(config_path, 'r') as f:
@@ -1322,18 +1324,22 @@ def draw_spect_on_all_vidframe(fpath_out, data_dir, sspecfile, t_end=-1, color_e
             cam_delay = f['/camera_param/cam_delay']
         else:
             cam_delay = cam_delay_default
+        if '/camera_param/v_fps' in f:
+            v_fps = f['/camera_param/v_fps']
+        else:
+            v_fps = v_fps_default
 
     if t_end > 0:
         I = T[:,1]/fs < t_end
         T = T[I,:]
 
     T[:,1] = T[:,1]/fs
-    t = np.arange(0, T[-10,1], 1/v_fs)
+    t = np.arange(0, T[-10,1], 1/v_fps)
     n_frame = t.shape[0]
 
     vr = cv2.VideoCapture(vid_file)
     fmt = cv2.VideoWriter_fourcc('m', 'p', '4', 'v') 
-    vw = cv2.VideoWriter(fpath_out, fmt, v_fs, (int(vr.get(cv2.CAP_PROP_FRAME_WIDTH)), int(vr.get(cv2.CAP_PROP_FRAME_HEIGHT)+spect_height)), isColor=True) 
+    vw = cv2.VideoWriter(fpath_out, fmt, v_fps, (int(vr.get(cv2.CAP_PROP_FRAME_WIDTH)), int(vr.get(cv2.CAP_PROP_FRAME_HEIGHT)+spect_height)), isColor=True) 
     with h5py.File(sspecfile, mode='r') as f:
         with open_dat(data_dir) as fp_dat:
             frame_snd = []  
