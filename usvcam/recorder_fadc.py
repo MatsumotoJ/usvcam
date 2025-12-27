@@ -19,6 +19,8 @@ from . import tool
 script_dir = os.path.dirname(__file__)
 config_path = script_dir + '/config_fadc.yaml' 
 
+cam_delay = 0.1
+
 def rs_start(color_mode, laser_power):
 
     pipe = rs.pipeline()
@@ -100,6 +102,7 @@ def start_recording(data_dir, color_mode, record_depth, depth_intrin, color_intr
         tool.save_extrinsics(f, '/camera_param/depth_to_color_extrin', depth_to_color_extrin)
         f.create_dataset('/camera_param/color_mode', data = color_mode)
         f.create_dataset('/camera_param/camera_height', data = camera_height)
+        f.create_dataset('/camera_param/cam_delay', data = cam_delay)
         f.create_dataset('/daq_param/fs', data = daq_fs)
         f.create_dataset('/daq_param/n_ch', data = daq_n_ch)
         f.create_dataset('/misc/speedOfSound', data=speedOfSound)
