@@ -1376,29 +1376,6 @@ def estimate_assign_param_simple(data_dirs, calib_files, outfile, d_max=10, bin_
 
         calib_file = calib_files[i_data]
 
-        """
-        for ld in loc_data:
-            i_frame = int(ld[2])
-            p = ld[3:5]
-
-            p_s = snout_pos[i_frame,:]
-
-            if np.isnan(p_s[0]):
-                continue
-
-            if np.isnan(p[0]):
-                continue
-
-            p = np.reshape(p, [1,2])
-            p_s = np.reshape(p_s, [1,2])
-
-            p_az, p_el = point2angle(data_dir, calib_file, p)
-            p_s_az, p_s_el = point2angle(data_dir, calib_file, p_s)
-
-            x = [rad2deg(p_az), rad2deg(p_el), rad2deg(p_s_az), rad2deg(p_s_el)]
-            X.append(x)
-        """
-
         for ld in loc_data:
 
             i_frame = int(ld[2])
