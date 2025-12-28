@@ -198,7 +198,7 @@ def assign_all_segs_simple(data_dir, calibfile, assignfile, conf_thr=0.99, d_max
         speedOfSound = f['/misc/speedOfSound'][()]
         pressure_calib = f['/misc/pressure_calib'][()]
         if '/camera_param/cam_delay' in f:
-            cam_delay = f['/camera_param/cam_delay']
+            cam_delay = f['/camera_param/cam_delay'][()]
         else:
             cam_delay = cam_delay_default
 
@@ -309,7 +309,7 @@ def assign_all_segs(data_dir, calibfile, assignfile, n_mice, conf_thr=0.99):
         speedOfSound = f['/misc/speedOfSound'][()]
         pressure_calib = f['/misc/pressure_calib'][()]
         if '/camera_param/cam_delay' in f:
-            cam_delay = f['/camera_param/cam_delay']
+            cam_delay = f['/camera_param/cam_delay'][()]
         else:
             cam_delay = cam_delay_default
 
@@ -813,7 +813,7 @@ def calc_vm_stats(data_dir, calibfile, roi=None, iter_id=None):
         speedOfSound = f['/misc/speedOfSound'][()]
         pressure_calib = f['/misc/pressure_calib'][()]
         if '/camera_param/cam_delay' in f:
-            cam_delay = f['/camera_param/cam_delay']
+            cam_delay = f['/camera_param/cam_delay'][()]
         else:
             cam_delay = cam_delay_default
 
@@ -1094,11 +1094,11 @@ def draw_assign_on_all_vidframe(fpath_out, data_dir, n_mice, conf_thr=0.99, colo
         n_ch = f['/daq_param/n_ch'][()]
         n_ch = n_ch.astype(np.int64)
         if '/camera_param/cam_delay' in f:
-            cam_delay = f['/camera_param/cam_delay']
+            cam_delay = f['/camera_param/cam_delay'][()]
         else:
             cam_delay = cam_delay_default
         if '/camera_param/v_fps' in f:
-            v_fps = f['/camera_param/v_fps']
+            v_fps = f['/camera_param/v_fps'][()]
         else:
             v_fps = v_fps_default
 
@@ -1244,11 +1244,11 @@ def draw_spect_on_all_vidframe(fpath_out, data_dir, sspecfile, t_end=-1, color_e
         n_ch = f['/daq_param/n_ch'][()]
         n_ch = n_ch.astype(np.int64)
         if '/camera_param/cam_delay' in f:
-            cam_delay = f['/camera_param/cam_delay']
+            cam_delay = f['/camera_param/cam_delay'][()]
         else:
             cam_delay = cam_delay_default
         if '/camera_param/v_fps' in f:
-            v_fps = f['/camera_param/v_fps']
+            v_fps = f['/camera_param/v_fps'][()]
         else:
             v_fps = v_fps_default
 
@@ -1843,7 +1843,7 @@ def locate_all_segs(data_dir, calibfile, vid_mrgn=100, roi=None, out_sspec=False
         speedOfSound = f['/misc/speedOfSound'][()]
         pressure_calib = f['/misc/pressure_calib'][()]
         if '/camera_param/cam_delay' in f:
-            cam_delay = f['/camera_param/cam_delay']
+            cam_delay = f['/camera_param/cam_delay'][()]
         else:
             cam_delay = cam_delay_default
 
@@ -2026,7 +2026,7 @@ def pick_seg_for_calib(data_dir, n_pos_check=20):
         fs = f['/daq_param/fs'][()]
         n_ch = f['/daq_param/n_ch'][()]
         if '/camera_param/cam_delay' in f:
-            cam_delay = f['/camera_param/cam_delay']
+            cam_delay = f['/camera_param/cam_delay'][()]
         else:
             cam_delay = cam_delay_default
 
@@ -2100,7 +2100,7 @@ def pick_seg_for_calib_manual(data_dir):
         fs = f['/daq_param/fs'][()]
         n_ch = f['/daq_param/n_ch'][()]
         if '/camera_param/cam_delay' in f:
-            cam_delay = f['/camera_param/cam_delay']
+            cam_delay = f['/camera_param/cam_delay'][()]
         else:
             cam_delay = cam_delay_default
 
