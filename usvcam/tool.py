@@ -536,6 +536,8 @@ def calib_micpos(data_dir, SEG, P, calibfile=None, h5f_outpath=None, pos_lim=Non
                 plt.plot(xx[:,0], xx[:,1], 'o')
                 plt.xlim(pos_lim[0][0], pos_lim[1][0])
                 plt.ylim(pos_lim[0][1], pos_lim[1][1])
+                plt.gca().invert_xaxis()
+                plt.gca().invert_yaxis()
                 plt.gca().set_box_aspect((pos_lim[1][1] - pos_lim[0][1]) / (pos_lim[1][0] - pos_lim[0][0]))
                 plt.show()
 
