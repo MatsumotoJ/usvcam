@@ -721,6 +721,10 @@ def calc_sspec_all_frame(data_dir, calibfile, fpath_out, t_end=-1, d=5):
         im_h = f['/camera_param/color_intrin/height'][()]
         speedOfSound = f['/misc/speedOfSound'][()]
         pressure_calib = f['/misc/pressure_calib'][()]
+    if '/camera_param/cam_delay' in f:
+        cam_delay = f['/camera_param/cam_delay'][()]
+    else:
+        cam_delay = cam_delay_default
 
     tau, grid_shape = get_tau(data_dir, calibfile, speedOfSound, d=d)
 
@@ -772,7 +776,7 @@ def calc_sspec_all_frame(data_dir, calibfile, fpath_out, t_end=-1, d=5):
         with open_dat(data_dir) as fp_dat:
             for i_frame in tqdm(range(n_frame)):
 
-                t_intv = np.array([T[i_frame,1]-wsize/2, T[i_frame,1]+wsize/2])/fs
+                t_intv = np.array([T[i_frame,1]-wsize/2, T[i_frame,1]+wsize/2])/fs - cam_delay
 
                 while t_intv[1] > t_calc_done:
                     #print('calc chunk...')
@@ -1132,7 +1136,7 @@ def draw_assign_on_all_vidframe(fpath_out, data_dir, n_mice, conf_thr=0.99, colo
         med = None
         for i_frame in tqdm(range(n_frame)):
 
-            while crnt_ts+cam_delay < t[i_frame]:
+            while crnt_ts-cam_delay < t[i_frame]:
                 ret, frame = vr.read()
                 if color_eq:
                     frame = adjust_color(frame)
@@ -1279,7 +1283,7 @@ def draw_spect_on_all_vidframe(fpath_out, data_dir, sspecfile, t_end=-1, color_e
             pre_t = -1
             med = None
             for i_frame in tqdm(range(n_frame)):
-                while crnt_ts+cam_delay < t[i_frame]:
+                while crnt_ts-cam_delay < t[i_frame]:
                     ret, frame = vr.read()
                     crnt_ts = T[cnt,1]
                     cnt += 1
