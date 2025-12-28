@@ -80,24 +80,45 @@ def create_localization_video(data_dir, calibfile, t_end=-1, color_eq=False, onl
 def dat2wav(data_dir, i_ch, offset=0):
     tool.dat2wav(data_dir, i_ch, offset)
 
-def run_usvseg(data_dir, usvseg_prm_file):
+def extract_ch(data_dir, i_ch, offset=0):
 
-    if os.path.isfile(data_dir + '/snd.flac'):
-        fp = data_dir + '/snd.flac'
-    else:
-        L = glob.glob(data_dir + '/*.wav')
-        L = [file for file in L if ".audible." not in file]
-        fp = L[0]
+    if os.path.isfile(data_dir + '/snd.dat'):
+        tool.dat2flac(data_dir, i_ch, offset)
+    elif os.path.isfile(data_dir + '/snd.flac'):
+        tool.flac2flac(data_dir, i_ch, offset)
 
-    with open(usvseg_prm_file, 'r') as f:
-        params = yaml.load(f, Loader=yaml.SafeLoader)
+def run_usvseg(data_dir, usvseg_prm_file, i_ch=0, offset=0):
 
-    savefp = os.path.splitext(fp)[0] + '.usvseg_dat.csv'
     outp = data_dir + '/seg'
-    fname_audiblewav = os.path.splitext(fp)[0] + '.audible.flac'
 
-    # clean seg folder to avoid contamination with the previous calculation results
+    # clean files to avoid contamination with the previous calculation results
     if os.path.exists(outp):
         shutil.rmtree(outp)
+    L = glob.glob(data_dir + '/*.audible.*')
+    for l in L:
+        os.remove(l)
+    L = glob.glob(data_dir + '/*.ch*.wav')
+    for l in L:
+        os.remove(l)
+    L = glob.glob(data_dir + '/*.ch*.flac')
+    for l in L:
+        os.remove(l)
+    L = glob.glob(data_dir + '/*.usvseg_dat.csv')
+    for l in L:
+        os.remove(l)
+
+    # extrac ch for usvseg
+    if i_ch == 0 and os.path.isfile(data_dir + '/snd.flac'):
+        fp = data_dir + '/snd.flac'
+    else: 
+        extract_ch(data_dir, i_ch, offset)
+        L = glob.glob(data_dir + '/*.ch*.flac')
+        fp = L[0]
+
+    # run usvseg
+    with open(usvseg_prm_file, 'r') as f:
+        params = yaml.load(f, Loader=yaml.SafeLoader)
+    savefp = os.path.splitext(fp)[0] + '.usvseg_dat.csv'
+    fname_audiblewav = os.path.splitext(fp)[0] + '.audible.flac'
 
     usvseg.proc_wavfile(params, fp, savefp, outp, fname_audiblewav=fname_audiblewav, usvcamflg=True)

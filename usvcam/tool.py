@@ -955,7 +955,7 @@ def create_localization_video(data_dir, calibfile, t_end=-1, color_eq=False, onl
 def dat2wav(data_dir, i_ch, offset=0):
 
     fpath_dat = data_dir + '/snd.dat'
-    fpath_wav = data_dir + '/' + os.path.splitext(os.path.basename(fpath_dat))[0] + '.ch{:d}.wav'.format(i_ch)
+    fpath_wav = data_dir + '/snd.ch{:d}.wav'.format(i_ch)
     paramfile = data_dir + '/param.h5'
     with h5py.File(paramfile, mode='r') as f:    
         fs = f['/daq_param/fs'][()]
@@ -983,6 +983,37 @@ def dat2wav(data_dir, i_ch, offset=0):
                 xxx = np.zeros(xx.shape[0], np.int16)
                 xxx[:] = xx
                 f_out.writeframes(xxx)
+
+def dat2flac(data_dir, i_ch, offset=0):
+
+    fpath_dat = data_dir + '/snd.dat'
+    fpath_flac = data_dir + '/snd.ch{:d}.flac'.format(i_ch)
+    paramfile = data_dir + '/param.h5'
+    with h5py.File(paramfile, mode='r') as f:    
+        fs = f['/daq_param/fs'][()]
+        n_ch = f['/daq_param/n_ch'][()]
+
+    fsize = os.path.getsize(fpath_dat)
+
+    a = np.fromfile(fpath_dat, np.int16)
+    a = a - offset
+    x = a.reshape([-1, n_ch])
+
+    soundfile.write(fpath_flac, x[:,i_ch], fs)
+
+def flac2flac(data_dir, i_ch, offset=0):
+
+    fpath_flac_in = data_dir + '/snd.flac'
+    fpath_flac_out = data_dir + '/snd.ch{:d}.flac'.format(i_ch)
+    paramfile = data_dir + '/param.h5'
+    with h5py.File(paramfile, mode='r') as f:    
+        fs = f['/daq_param/fs'][()]
+        n_ch = f['/daq_param/n_ch'][()]
+
+    with soundfile.SoundFile(fpath_flac_in, "r") as f:
+        with soundfile.SoundFile(fpath_flac_out, "w", samplerate=f.samplerate, channels=1, subtype="PCM_16") as g:
+            for block in soundfile.blocks(fpath_flac_in, blocksize=262144, always_2d=True, dtype="int16"):
+                g.write(block[:, i_ch] - offset)
 
 def detect_bbv(data_dir, thr=1.4):
 
