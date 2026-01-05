@@ -1,11 +1,8 @@
-# User guide 
-
-*This document is written for the new 8-ch device available from the Katou Acoustics Consultant Office. For 4-ch legacy device used in [iScience 2022 paper](https://doi.org/10.1016/j.isci.2022.104812), see [this document](./user_guide_legacy.md).*
+# User guide (for legacy device)
 
 *Feel free to open an issue in github for questions.*
 
 ## Index
-
 1. [Preparing hardware](#prep_hard)
 2. [Installing software](#installing)
 3. [Recording](#recording)
@@ -18,25 +15,44 @@ To play with pre-recorded test data, check (2) and (4).
 <a name="prep_hard"></a>
 ## 1. Preparing hardware
 
-This picture shows the sensor assembly of an 8-channel recording device available from the Katou Acoustics Consultant Office. It consists of eight microphones and a calibrated camera (Intel RealSense D435). The recording device includes an A/D converter, enabling direct connection to a PC via USB 3.0.
+For recording, the system requires the following PC, AD converter, and sensors. The connections between these devices are shown below.
 
-<img src="./imgs/dev_katou8ch.jpg" width="50%">.
+<img src="./imgs/connection.png" width="70%"> 
 
+You may also need some customized equipments to minimize sound reflections for precise sound localization (see below).
 
-> The masking tape was placed over the camera’s IR emitter to diffuse the projected IR pattern and use it as a uniform IR light source.
+For analysis, you can use the same or a PC with similar performance. The operating system of the recording PC is Windows, but Mac and Linux OS can also be used for analysis (Contact us for this).
 
-The recommended specification of the PC is as follows:
-
+### PC
 - CPU: Core i7 or Faster
 - RAM: 16 GB or larger
 - One empty x4/x8/x16 PCI Express slot
 - SSDs are recommended for the OS and the initial data storage.
 - (Optional) NVIDIA CUDA GPU (e.g., GeForce RTX 2060; use of the GPU makes sound localization around x2 faster)
 
-For analysis, you can use the same or a PC with similar performance. The operating system of the recording PC is Windows, but Mac and Linux OS can also be used for analysis.
+### AD converter
+- National instruments [PCIe-6374](https://www.ni.com/ja-jp/support/model.pcie-6374.html)
+- National instruments [BNC-2110](https://www.ni.com/ja-jp/support/model.bnc-2110.html) (BNC terminal of the board)
 
-You may also need some customized equipments to minimize sound reflections for precise sound localization:
+### Microphone amplifier
+- A custom four-channel microphone amplifier (BSA-CCPMA4-UT20) made by Katou Acoustics Consultant Office. Contact [authors](https://) about how to purchase the same device from the company. 
+- OR you may be able to use another microphone amplifier which fits the microphones and the AD converter, and has no noise from 1 to 100 kHz. 
 
+### Sensor assembly
+- Microphones: 4 x [Aco TYPE 4158N](https://www.aco-japan.co.jp/english/product/id538.html)
+- Camera: [Intel Realsense L515](https://www.intelrealsense.com/lidar-camera-l515/)
+- 3D printed sensor holder ([STL file](../misc/sensor_holder.stl)).
+- M3 stainless steel screws and M4 nylon screws
+
+The picture below shows the assembled sensors. 
+
+<img src="./imgs/pic_sensor_caption.png" width="50%"> 
+
+**Details**: The microphones are fixed with the M4 screws and the camera is fixed with M3 screws to the 3D printed holder. The holder should be printed with ABS, nylon or equivalents. After printing, cut the thread for the M4 screws. You may also need to slightly enlarge the holes for microphones with a &phi;7-mm drill tip. Insert the microphone from its back to avoid plastic dust covering the microphone. Make the distance between microphones minimum, but without touching. You can use the [camera mounting screw hole on the bottom of the camera](https://www.intelrealsense.com/wp-content/uploads/2019/12/lidar_camera_gallery_3.jpg) to fix the sensor assembly to your own experimental setup. 
+
+**TIPS**: In the long (>1 m) connection, use of a high quality industrial USB 3 cable (such as [this](https://www.newnex.com/usb-3-products.php)) is recommended for stable video capturing.
+
+### Equipment to minimize sound reflections
 - The recording room where ultrasound reflections are minimized. For example, we used a soundproof box with 20-mm thickness melamine foam on its walls and ceiling. 
 - The behavioral testing chamber where ultrasound reflections are minimized. For example, we used a [fine mesh inner cage](./inner_cage.md) for recording in home cages.
 
@@ -94,7 +110,7 @@ Before the initial recording, edit the configuration file to input the recording
 (usvcam) C:\experiment1> config
 ```
 
-`camera_height` should be changed to the actual height of the camera from the floor in your recording setup. Change `color_mode` to 0 or 1, if you want to acquire infrared or color video, respectively. `laser_power` indicates the power of IR-emitter of the camera (range = 0 to 360). 
+`camera_height` should be changed to the actual height of the camera from the floor in your recording setup. Change `color_mode` to 0 or 1, if you want to acquire infrared or color video, respectively. `laser_power` indicates the power of IR-emitter of the camera (range = 0 to 100). `daq_dev_name` may need to be changed to the actual name of the installed AD converter (you can check it by opening **NI MAX** from the start menu). 
 
 Lunch the recorder app with the following command:
 ```
@@ -110,13 +126,9 @@ After the recording, a data directory is generated in the current working direct
 <a name="analysis"></a>
 ## 4. Analysis
 
-if you have no device and want to try the algorithm with demo data, check [here](./user_guide_legacy.md#4-analysis). 
-
-The following python commands are summarized in [a jupyter-notebook (example.ipynb)](../example.ipynb).
+You can download test data from [here](https://doi.org/10.6084/m9.figshare.17121275.v1) (1.7 GB; test_data.zip), to try the analysis below without your own recording. The following python commands are summarized in a [jupyter-notebook](../example.ipynb).
 
 **NOTE**: In addition to data generated with the recorder app, you need `snout.csv` file in the data directory, which contains xy locations (in pixels) of the snout of each mouse in all the video frames in `vid.mp4`. In `snout.csv` file, each row represents a video frame, and the format of the row is `x of mouse1, y of mouse1, x of mouse2, y of mouse2, ...`. Prepare the data by processing `vid.mp4` with a video tracking software (such as [DeepLabCut](https://github.com/DeepLabCut/DeepLabCut), [SLEAP](https://github.com/murthylab/sleap), [MARS](https://neuroethology.github.io/MARS), etc). In the test data, `snout.csv` files made by authors are included.
-
-**NOTE**: For turning on GPU acceleration, call `usvcam.analysis.enable_gpu()` after `import usvcam.analysis` in the python code below.
 
 ### 4.1 Preprocess - USV segmentation
 
@@ -130,8 +142,14 @@ Run the following python codes, given that the data directory is `./test_data/si
 import usvcam.analysis
 
 data_dir = './test_data/single_mouse'
-usvseg_prm_file = '[file path of USVSEG parameters]'
 
+usvcam.analysis.dat2wav(data_dir, 3)
+```
+This will convert the `snd.dat` file to a wav file.
+
+Then, perform USV segmentation with the USVSEG algorithm, by running the following python codes:
+```
+usvseg_prm_file = '[file path of USVSEG parameters]'
 usvcam.analysis.run_usvseg(data_dir, usvseg_prm_file)
 ```
 Replace [file path of USVSEG parameters] with the path of USVSEG parameter file (see [this example](../misc/usvseg_prm.yaml) of the parameter file). See [the USVSEG Github repository](https://github.com/MatsumotoJ/usvseg_python) for detailed documentation on USVSEG. 
@@ -144,13 +162,15 @@ For the sound localization, the system needs the accurate information of the pos
 
 After the USV segmentation (4.1), run the following python code:
 ```
-usvcam.analysis.calib_micpos(data_dir, outpath='./test_data/micpos.h5', vis_progress=True)
+usvcam.analysis.calib_with_voc(data_dir, outpath='./test_data/micpos.h5')
 ```
-The program will automatically categorize syllables into 20 groups based on the locations where they were emitted. Then, the program asks you to select one clean USV recording (minimum noise and high S/N) from each group. Press space key to pick or other keys to skip the displayed USV. Finally the program start an optimization process to estimate microphone positions using the selected USVs and their locations (the microphone positions under optimization will be shown at each iteration when `vis_progress=True`). The result of calibration is saved in the file path specified as the `outpath` variable.
+The program will automatically categorize syllables into 20 groups based on the locations where they were emitted. Then, the program asks you to select one clean USV recording (minimum noise and high S/N) from each group. Press space key to pick or other keys to skip the displayed USV. Finally the program start an optimization process to estimate microphone positions using the selected USVs and their locations. The result of calibration is saved in the file path specified as the `outpath` variable.
 
 ### 4.3 Estimating parameters for assignment
 
-Performance of the sound localization depends on various factors, especially acoustic environment of the recording setup. Thus, USVCAM needs data for performance validation in each environment and adjusts criteria for assignment according to the validation. For the validation data, you need single mouse data. Recommended total number of vocalization (syllables) in the validation data is >1,000. They can be recorded in multiple sessions. *This process takes hours.*
+*This process takes hours. If you are using the test data and want to skip the process, download the result from [here](https://doi.org/10.6084/m9.figshare.17121275.v1) (assign_param.h5).*
+
+Performance of the sound localization depends on various factors, especially acoustic environment of the recording setup. Thus, USVCAM needs data for performance validation in each environment and adjusts criteria for assignment according to the validation. For the validation data, you need single mouse data. Recommended total number of vocalization (syllables) in the validation data is >1,000. They can be recorded in multiple sessions. 
 
 After the USV segmentation (4.1), run the following python codes, given that the data directory is `./test_data/single_mouse`:
 ```
