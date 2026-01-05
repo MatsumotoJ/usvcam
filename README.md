@@ -6,11 +6,17 @@
 
 **USVCAM** is an acoustic camera system for localization and assignment of ultrasonic vocalizations (USVs) for interacting laboratory rodents. Thanks to its design utilizing a small phased microphone array combined with a camera, USVCAM has many advantages over the previous systems using a distributed microphone array.
 
+## News
+
+2026/1/xx: The **all-in-one recording device** (camera, 8-channel MEMS microphone array, and A/D converter) for USVCAM is now commercially available from *the Katou Acoustics Consultant Office*.
+
+<img src="./docs/imgs/dev_katou8ch.jpg" width="30%">
+
 ## Features
 + Single and compact sensor assembly.
 + Applicable to various experimental apparatuses, e.g., recording in home cages. 
 + Speedy processing (near real-time speed with a single inexpensive PC).
-+ Precision comparable to or better than the previous systems.
++ Precision comparable to or better than the existing systems.
 + Syllable extraction for each of the simultaneously vocalizing animals.
 + User friendly interfaces and functions.
 
@@ -27,10 +33,11 @@ See [the user guide](./docs/user_guide.md).
 - [x] First release
 - [x] Integrating USVSEG as a python script
 - [x] Support for different types of cameras (see [here](./misc/for_custom_system/README.md))
-- [ ] Cheaper, pre-assembled sensor unit
+- [x] Cheaper, pre-assembled sensor unit
+- [x] Use of more sensitive microphone for larger recording area.
 - [ ] GUI
-- [ ] Use of more sensitive microphone for larger recording area.
-- [ ] User guide for video tracking of interacting animals
+
+...and more to come!
 
 ## Contacts
 Follow [@jumpeim_uot](https://twitter.com/jumpeim_uot) on Twitter for the news and update.
@@ -56,7 +63,7 @@ More information about USVSEG, the USV segmentation algorithm used in the USVCAM
 See also USVSEG Github repositories: [original Matlab verion](https://github.com/rtachi-lab/usvseg); [Python version](https://github.com/MatsumotoJ/usvseg_python)
 
 ## Acknowledgement
-This work was supported by Grant-in-Aid for Scientific Research from Japan Society for the Promotion of Science (nos. 16H06534, 21K06438, 19H04912), the Firstbank of Toyama Scholarship Foundation Research Grant, Tokyo Biochemical Research Foundation, Takeda Science Foundation, Grant for Basic Science Research Projects from The Sumitomo Foundation, and RIKEN Collaborative Technical Development in Data-driven Brain Science.
+This work was supported by Grant-in-Aid for Scientific Research from Japan Society for the Promotion of Science (nos. 16H06534, 21K06438, 19H04912, 22H05157, 25K21742, 25K21980), Japan Science and Technology Agency FOREST Program (JPMJFR2320), the Firstbank of Toyama Scholarship Foundation Research Grant, Tokyo Biochemical Research Foundation, Takeda Science Foundation, Grant for Basic Science Research Projects from The Sumitomo Foundation, and RIKEN Collaborative Technical Development in Data-driven Brain Science.
 The icon of USVCAM on the top of this README file was created by [Sayaka Togo](https://way105.com/). 
 
 

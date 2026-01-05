@@ -20,8 +20,7 @@ To play with pre-recorded test data, check (2) and (4).
 
 This picture shows the sensor assembly of an 8-channel recording device available from the Katou Acoustics Consultant Office. It consists of eight microphones and a calibrated camera (Intel RealSense D435). The recording device includes an A/D converter, enabling direct connection to a PC via USB 3.0.
 
-<img src="./imgs/dev_katou8ch.jpg" width="50%">.
-
+<img src="./imgs/dev_katou8ch.jpg" width="50%">
 
 > The masking tape was placed over the camera’s IR emitter to diffuse the projected IR pattern and use it as a uniform IR light source.
 
