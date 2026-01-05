@@ -107,14 +107,14 @@ Activate the conda environment with the following command:
 
 Before the initial recording, edit the configuration file to input the recording parameters. You can open the config file with the following command:
 ```
-(usvcam) C:\experiment1> config
+(usvcam) C:\experiment1> config_legacy
 ```
 
-`camera_height` should be changed to the actual height of the camera from the floor in your recording setup. Change `color_mode` to 0 or 1, if you want to acquire infrared or color video, respectively. `laser_power` indicates the power of IR-emitter of the camera (range = 0 to 100). `daq_dev_name` may need to be changed to the actual name of the installed AD converter (you can check it by opening **NI MAX** from the start menu). 
+`camera_height` should be changed to the actual height of the camera from the floor in your recording setup. Change `color_mode` to 0 or 1, if you want to acquire infrared or color video, respectively. `laser_power` indicates the power of IR-emitter of the camera (range = 0 to 360). `daq_dev_name` may need to be changed to the actual name of the installed AD converter (you can check it by opening **NI MAX** from the start menu). 
 
 Lunch the recorder app with the following command:
 ```
-(base) C:\experiment1> rec [file_prefix]
+(base) C:\experiment1> rec_legacy [file_prefix]
 ```
 Replace `[file_prefix]` with any text that you want as the prefix of the recorded file name. 
 
@@ -130,6 +130,8 @@ You can download test data from [here](https://doi.org/10.6084/m9.figshare.17121
 
 **NOTE**: In addition to data generated with the recorder app, you need `snout.csv` file in the data directory, which contains xy locations (in pixels) of the snout of each mouse in all the video frames in `vid.mp4`. In `snout.csv` file, each row represents a video frame, and the format of the row is `x of mouse1, y of mouse1, x of mouse2, y of mouse2, ...`. Prepare the data by processing `vid.mp4` with a video tracking software (such as [DeepLabCut](https://github.com/DeepLabCut/DeepLabCut), [SLEAP](https://github.com/murthylab/sleap), [MARS](https://neuroethology.github.io/MARS), etc). In the test data, `snout.csv` files made by authors are included.
 
+**NOTE**: For turning on GPU acceleration, call `usvcam.analysis.enable_gpu()` after `import usvcam.analysis` in the python code below.
+
 ### 4.1 Preprocess - USV segmentation
 
 Before the analyses described in following sections, the data needs to be preprocessed to search for USV segments. 
@@ -142,14 +144,8 @@ Run the following python codes, given that the data directory is `./test_data/si
 import usvcam.analysis
 
 data_dir = './test_data/single_mouse'
-
-usvcam.analysis.dat2wav(data_dir, 3)
-```
-This will convert the `snd.dat` file to a wav file.
-
-Then, perform USV segmentation with the USVSEG algorithm, by running the following python codes:
-```
 usvseg_prm_file = '[file path of USVSEG parameters]'
+
 usvcam.analysis.run_usvseg(data_dir, usvseg_prm_file)
 ```
 Replace [file path of USVSEG parameters] with the path of USVSEG parameter file (see [this example](../misc/usvseg_prm.yaml) of the parameter file). See [the USVSEG Github repository](https://github.com/MatsumotoJ/usvseg_python) for detailed documentation on USVSEG. 
@@ -162,9 +158,9 @@ For the sound localization, the system needs the accurate information of the pos
 
 After the USV segmentation (4.1), run the following python code:
 ```
-usvcam.analysis.calib_with_voc(data_dir, outpath='./test_data/micpos.h5')
+usvcam.analysis.calib_micpos(data_dir, outpath='./test_data/micpos.h5', vis_progress=True)
 ```
-The program will automatically categorize syllables into 20 groups based on the locations where they were emitted. Then, the program asks you to select one clean USV recording (minimum noise and high S/N) from each group. Press space key to pick or other keys to skip the displayed USV. Finally the program start an optimization process to estimate microphone positions using the selected USVs and their locations. The result of calibration is saved in the file path specified as the `outpath` variable.
+The program will automatically categorize syllables into 20 groups based on the locations where they were emitted. Then, the program asks you to select one clean USV recording (minimum noise and high S/N) from each group. Press space key to pick or other keys to skip the displayed USV. Finally the program start an optimization process to estimate microphone positions using the selected USVs and their locations (the microphone positions under optimization will be shown at each iteration when `vis_progress=True`). The result of calibration is saved in the file path specified as the `outpath` variable.
 
 ### 4.3 Estimating parameters for assignment
 

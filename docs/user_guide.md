@@ -12,6 +12,8 @@
 4. [Analysis](#analysis)
 5. [Information for advanced users](#info_au)
 
+To play with pre-recorded test data, check (2) and (4). 
+
 ---
 <a name="prep_hard"></a>
 ## 1. Preparing hardware
@@ -41,7 +43,7 @@ You may also need some customized equipments to minimize sound reflections for p
 <a name="installing"></a>
 ## 2. Installing software
 
-Install the camera driver ([Intel RealSense SDK 2.0](https://github.com/IntelRealSense/librealsense/releases)), the AD converter driver ([NI-DAQmx](https://www.ni.com/en-us/support/downloads/drivers/download.ni-daqmx.html)) and [Anaconda](https://docs.anaconda.com/anaconda/install/)/[Miniconda](https://www.anaconda.com/docs/getting-started/miniconda/install).
+Install the camera driver ([Intel RealSense SDK 2.0](https://github.com/IntelRealSense/librealsense/releases)) and [Anaconda](https://docs.anaconda.com/anaconda/install/)/[Miniconda](https://www.anaconda.com/docs/getting-started/miniconda/install).
 Optionally, to use a CUDA GPU, install the recent [NVIDIA driver](https://www.nvidia.com/Download/index.aspx).
 
 Then, download the [USVCAM software](https://github.com/MatsumotoJ/usvcam/releases/latest) and extract it somewhere in the PC. Below the path of the extracted directory is assumed to be `C:/usvcam/`. 
