@@ -112,7 +112,7 @@ def run_usvseg(data_dir, usvseg_prm_file, i_ch=0, offset=0):
         fp = data_dir + '/snd.flac'
     else: 
         extract_ch(data_dir, i_ch, offset)
-        L = glob.glob(data_dir + '/*.ch*.flac')
+        L = glob.glob(data_dir + '/snd.ch*.flac')
         fp = L[0]
 
     # run usvseg

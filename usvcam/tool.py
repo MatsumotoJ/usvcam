@@ -1020,12 +1020,24 @@ def detect_bbv(data_dir, thr=1.4):
     # Note: thr = 1.4 -> 28 dB
 
     # load wav
+    wavfile = None
     L = glob.glob(data_dir + '/snd.*.wav')
     for l in L:
         if 'audible' in l:
             continue
         wavfile = l
-    fs, x = scipy.io.wavfile.read(wavfile)
+    if wavfile is None:
+        L = glob.glob(data_dir + '/snd.flac')
+        if len(L) > 0:
+            wavfile = L[0]
+    if wavfile is None:
+        L = glob.glob(data_dir + '/snd.*.flac')
+        for l in L:
+            if 'audible' in l:
+                continue
+            wavfile = l
+    #fs, x = scipy.io.wavfile.read(wavfile)
+    x, fs = soundfile.read(wavfile, dtype="int16")
 
     # downsample
     r = 10
