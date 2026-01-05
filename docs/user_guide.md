@@ -12,8 +12,6 @@
 4. [Analysis](#analysis)
 5. [Information for advanced users](#info_au)
 
-To play with pre-recorded test data, check (2) and (4). 
-
 ---
 <a name="prep_hard"></a>
 ## 1. Preparing hardware
