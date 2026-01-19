@@ -24,15 +24,18 @@ This picture shows the sensor assembly of an 8-channel recording device availabl
 
 > The masking tape was placed over the camera’s IR emitter to diffuse the projected IR pattern and use it as a uniform IR light source.
 
-The recommended specification of the PC is as follows:
+The recommended PC specifications are as follows:
 
-- CPU: Core i7 or Faster
-- RAM: 16 GB or larger
-- One empty x4/x8/x16 PCI Express slot
-- SSDs are recommended for the OS and the initial data storage.
-- (Optional) NVIDIA CUDA GPU (e.g., GeForce RTX 2060; use of the GPU makes sound localization around x2 faster)
+|  | Recording PC | Analysis PC |
+|-----------|--------------|-------------|
+| CPU | 4 cores / 8 threads or more | 4 cores / 8 threads or more |
+| RAM | 8 GB or more | 16 GB or more |
+| Storage | SSD for initial recording data storage | Any |
+| Interface | Two or more USB 3.0 ports with independent controllers | Any |
+| GPU | Any | NVIDIA CUDA-compatible GPU (optional)* |
+| OS | Windows 11 or later | Windows, macOS, or Linux 
 
-For analysis, you can use the same or a PC with similar performance. The operating system of the recording PC is Windows, but Mac and Linux OS can also be used for analysis.
+*GPU acceleration can speed up sound localization processing by approximately 2×.
 
 You may also need some customized equipments to minimize sound reflections for precise sound localization:
 
