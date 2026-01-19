@@ -33,7 +33,7 @@ The recommended PC specifications are as follows:
 | Storage | SSD for initial recording data storage | Any |
 | Interface | Two or more USB 3.0 ports with independent controllers | Any |
 | GPU | Any | NVIDIA CUDA-compatible GPU (optional)* |
-| OS | Windows 11 or later | Windows, macOS, or Linux 
+| OS | Windows 11 or later | Windows, macOS, or Linux |
 
 *GPU acceleration can speed up sound localization processing by approximately 2×.
 
