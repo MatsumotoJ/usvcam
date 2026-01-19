@@ -31,11 +31,11 @@ The recommended PC specifications are as follows:
 | CPU | 4 cores / 8 threads or more | 4 cores / 8 threads or more |
 | RAM | 8 GB or more | 16 GB or more |
 | Storage | SSD for initial recording data storage | Any |
-| Interface | Two or more USB 3.0 ports with sufficient bandwidth for simultaneous recording* | Any |
-| GPU | Any | NVIDIA CUDA-compatible GPU (optional)** |
+| Interface | Two or more USB 3.0 ports (10 Gbps aggregate bandwidth or more) | Any |
+| GPU | Any | NVIDIA CUDA-compatible GPU (optional)* |
 | OS | Windows 11 or later | Windows, macOS, or Linux |
 
-*High-bandwidth interfaces such as Thunderbolt can also meet this requirement. **GPU acceleration can speed up sound localization processing by approximately 2×.
+*GPU acceleration can speed up sound localization processing by approximately 2×.
 
 You may also need some customized equipments to minimize sound reflections for precise sound localization:
 
