@@ -39,7 +39,7 @@ The recommended PC specifications are as follows:
 
 You may also need some customized equipments to minimize sound reflections for precise sound localization:
 
-- The recording room where ultrasound reflections are minimized. For example, we used a soundproof box with 20-mm thickness melamine foam on its walls and ceiling. 
+- The recording room where ultrasound reflections are minimized. For example, we used a soundproof box with 20-mm thickness melamine resin foam sound absorbers on its walls and ceiling. 
 - The behavioral testing chamber where ultrasound reflections are minimized. For example, we used a [fine mesh inner cage](./inner_cage.md) for recording in home cages.
 
 ---
