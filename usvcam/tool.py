@@ -721,10 +721,10 @@ def calc_sspec_all_frame(data_dir, calibfile, fpath_out, t_end=-1, d=5):
         im_h = f['/camera_param/color_intrin/height'][()]
         speedOfSound = f['/misc/speedOfSound'][()]
         pressure_calib = f['/misc/pressure_calib'][()]
-    if '/camera_param/cam_delay' in f:
-        cam_delay = f['/camera_param/cam_delay'][()]
-    else:
-        cam_delay = cam_delay_default
+        if '/camera_param/cam_delay' in f:
+            cam_delay = f['/camera_param/cam_delay'][()]
+        else:
+            cam_delay = cam_delay_default
 
     tau, grid_shape = get_tau(data_dir, calibfile, speedOfSound, d=d)
 
