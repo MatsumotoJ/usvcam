@@ -909,7 +909,7 @@ def create_assignment_video(data_dir, n_mice, color_eq=False, min_dist=2.0):
     draw_assign_on_all_vidframe(tmpvidfile, data_dir, n_mice, color_eq=color_eq, min_dist=min_dist)
 
     print('combining sound and video...')
-    outfile = data_dir + './vid.asgn.mp4'
+    outfile = data_dir + '/vid.asgn.mp4'
     os.system('ffmpeg -y -i "' + tmpvidfile + '" -i "' + audiblewavfile + '" -c:v copy -c:a aac "' + outfile + '"')
 
     print('done')
@@ -947,7 +947,7 @@ def create_localization_video(data_dir, calibfile, t_end=-1, color_eq=False, onl
     else:
         tmpwavfile = audiblewavfile
 
-    outfile = data_dir + './vid.loc.mp4'
+    outfile = data_dir + '/vid.loc.mp4'
     os.system('ffmpeg -y -i "' + tmpvidfile + '" -i "' + tmpwavfile + '" -c:v copy -c:a aac "' + outfile + '"')
 
     print('done')
