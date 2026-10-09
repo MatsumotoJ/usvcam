@@ -1,6 +1,6 @@
 <p align="center"><img src="./misc/usvcam_icon.png" width="350"></p>
 
-# USVCAM: acoustic camera system for ultrasonic vocalizations 
+# USVCAM: acoustic camera system for ultrasonic vocalizations
 
 <img src="./docs/imgs/demo_loc_color.gif" width="300"> &nbsp;&nbsp; <img src="./docs/imgs/demo_assign_icr.gif" width="300"> &nbsp;&nbsp; <img src="./docs/imgs/pic_sensor.jpg" width="150"> 
 
