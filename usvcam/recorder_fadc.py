@@ -14,13 +14,15 @@ import yaml
 import subprocess
 
 import pyrealsense2 as rs
-from .fadc import *
+from .fadc_api import FadcDevice
 from . import tool
 script_dir = os.path.dirname(__file__)
 config_path = script_dir + '/config_fadc.yaml' 
 
 cam_delay = 0.1
 v_fps = 30
+
+daq_use_di = True
 
 def rs_start(color_mode, laser_power):
 
@@ -130,7 +132,13 @@ def start_recording(data_dir, color_mode, record_depth, depth_intrin, color_intr
     ]
     ffmpeg_process = subprocess.Popen(ffmpeg_cmd, stdin=subprocess.PIPE)
 
-    return ffmpeg_process, writer, fp_sync, fp_depth
+    # digital input
+    if daq_use_di:
+        fp_di = open(data_dir + "/di.bin", "wb")
+    else:
+        fp_di = None
+
+    return ffmpeg_process, writer, fp_sync, fp_depth, fp_di
 
 is_recording = False
 ch_preview = 0
@@ -149,20 +157,35 @@ def daq_proc(dev_handle, chunk_size, stop_event):
 
     while not stop_event.is_set():
 
-        buf = bytearray(chunk_size * daq_n_ch * 2)
-        bytes_returned = ctypes.c_uint32()
-        ret = fadcRead(dev_handle, (ctypes.c_ubyte*len(buf)).from_buffer(buf), len(buf), ctypes.pointer(bytes_returned))
+        #buf = bytearray(chunk_size * daq_n_ch * 2)
+        #bytes_returned = ctypes.c_uint32()
+        
+        #ret = fadcRead(dev_handle, (ctypes.c_ubyte*len(buf)).from_buffer(buf), len(buf), ctypes.pointer(bytes_returned))
 
-        if bytes_returned.value != len(buf):
-            print('length error', bytes_returned.value, '/', len(buf))
+        #if bytes_returned.value != len(buf):
+        #    print('length error', bytes_returned.value, '/', len(buf))
 
-        buf = np.frombuffer(buf, dtype=np.int16)
-        buf = np.reshape(buf, [-1, daq_n_ch])
-        number_of_samples = buf.shape[0]
+        
+        global daq_total_sample, is_recording, ffmpeg_process, fp_di, daq_use_di
 
-        global daq_total_sample, is_recording, ffmpeg_process
+        if daq_use_di:
+            buf = dev_handle.read(chunk_size * (daq_n_ch + 1) * 2)
+            buf = np.frombuffer(buf, dtype=np.int16)
+            buf = np.reshape(buf, [-1, daq_n_ch+1])
+            di_data = (buf[:, daq_n_ch] & 0x0F).astype(np.uint8)
+            buf = buf[:, :daq_n_ch]
+            number_of_samples = buf.shape[0]
+        else:
+            buf = dev_handle.read(chunk_size * daq_n_ch * 2)
+            buf = np.frombuffer(buf, dtype=np.int16)
+            buf = np.reshape(buf, [-1, daq_n_ch])
+            number_of_samples = buf.shape[0]
+            
         if is_recording:
-            #fp_daq.write(buf.tobytes())
+            
+            if daq_use_di:
+                fp_di.write(di_data.tobytes())
+
             ffmpeg_process.stdin.write(buf.tobytes())
             daq_total_sample += number_of_samples
 
@@ -176,7 +199,7 @@ def daq_proc(dev_handle, chunk_size, stop_event):
 def main():
 
     global is_recording, ch_preview, daq_total_sample, daq_buf_spec_n
-    global daq_n_ch, daq_vmax, daq_buf_spec_max, daq_buf_spec, ffmpeg_process
+    global daq_n_ch, daq_vmax, daq_buf_spec_max, daq_buf_spec, ffmpeg_process, fp_di, daq_use_di
 
     with open(config_path, 'r') as f:
         usvcam_cfg = yaml.safe_load(f)
@@ -186,6 +209,13 @@ def main():
     laser_power = usvcam_cfg['laser_power']
     record_depth = usvcam_cfg['record_depth']
     #devname = usvcam_cfg['daq_dev_name']
+
+    daq_use_di = True
+    if 'enable_digital_input' in usvcam_cfg:
+        if usvcam_cfg['enable_digital_input']:
+            daq_use_di = True
+        else:
+            daq_use_di = False
 
     is_recording = False
 
@@ -199,17 +229,23 @@ def main():
     daq_fs = int(384000)    # fixed
 
     # open device
-    dev_handle = ctypes.c_void_p()
-    ret = fadcOpenByIndex(ctypes.pointer(dev_handle),0)
+    dev_fadc = FadcDevice(0)
+    if dev_fadc.is_channel_count_supported():
+        if daq_use_di:
+            dev_fadc.set_channel_count(9)
+        else:
+            dev_fadc.set_channel_count(8)
+    else:
+        daq_use_di = False
 
     # start ADC
-    ret = fadcStart(dev_handle,1,0) # 1 = 384kHz
+    dev_fadc.start(1, 0) # 1 = 384kHz
 
     daq_total_sample = 0
 
     daq_stopevent = threading.Event()
     daq_thread = threading.Thread(target=daq_proc, args=(
-                dev_handle, daq_chunksize, daq_stopevent))
+                dev_fadc, daq_chunksize, daq_stopevent))
     
     ##### end of (1)
 
@@ -297,7 +333,7 @@ def main():
                 outdir = './data/' + datetime.datetime.now().strftime('%Y%m%d_%H%M%S')
                 
             os.makedirs(outdir, exist_ok=True)
-            ffmpeg_process, writer, fp_sync, fp_depth = start_recording(outdir, color_mode, record_depth, depth_intrin, color_intrin, depth_to_color_extrin, daq_fs, daq_n_ch, usvcam_cfg['camera_height'])
+            ffmpeg_process, writer, fp_sync, fp_depth, fp_di = start_recording(outdir, color_mode, record_depth, depth_intrin, color_intrin, depth_to_color_extrin, daq_fs, daq_n_ch, usvcam_cfg['camera_height'])
             is_recording = True
             framecnt = 0
         if k== 27:
@@ -312,12 +348,14 @@ def main():
         writer.release()
         if record_depth:
             fp_depth.close()
+        if daq_use_di:
+            fp_di.close()
         
     daq_stopevent.set()
     daq_thread.join()
 
-    ret = fadcStop(dev_handle)
-    ret = fadcClose(dev_handle)
+    dev_fadc.stop()
+    dev_fadc.close()
 
     pipe.stop()
 

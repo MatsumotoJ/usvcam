@@ -41,6 +41,63 @@ only_max_default = True
 usegpu = False
 cupy = None
 
+def convert_di_to_csv(data_dir, chunk_size=10_000_000):
+
+    bin_file = os.path.join(data_dir, 'di.bin')
+    csv_file = os.path.join(data_dir, 'di.csv')
+
+    n_samples = os.path.getsize(bin_file)
+
+    sample_offset = 0
+    prev = None
+
+    with open(bin_file, 'rb') as fin, open(csv_file, 'w') as fout:
+
+        fout.write('sample,ch,edge\n')
+
+        with tqdm(total=n_samples, unit='samples', unit_scale=True,
+                  desc='Converting DI') as pbar:
+
+            while True:
+
+                di = np.fromfile(fin, dtype=np.uint8, count=chunk_size)
+
+                if di.size == 0:
+                    break
+
+                # Detect samples with changes in any DI channel
+                if prev is None:
+                    prev = di[0]
+
+                changed = di ^ np.concatenate(([prev], di[:-1]))
+                idx = np.flatnonzero(changed)
+
+                # Identify changed channels
+                sample_idx, ch = np.where(
+                    (changed[idx, None] >> np.arange(4)) & 1
+                )
+
+                sample = idx[sample_idx]
+
+                # Rising: +1, Falling: -1
+                edge = ((di[sample] >> ch) & 1).astype(np.int8) * 2 - 1
+
+                # Save edges with absolute sample indices
+                D = np.column_stack((
+                    sample + sample_offset,
+                    ch,
+                    edge
+                ))
+
+                if D.shape[0] > 0:
+                    np.savetxt(fout, D, fmt='%d', delimiter=',')
+
+                # Update for the next chunk
+                prev = di[-1]
+                sample_offset += di.size
+
+                pbar.update(di.size)
+
 def set_default_analysis_params_for_device(dev_name):
     global only_max_default
     if dev_name == 'legacy4ch':  # for device used in Matsumoto et al. 2022, iScience, 

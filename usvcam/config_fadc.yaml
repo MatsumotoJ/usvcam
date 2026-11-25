@@ -2,8 +2,6 @@
 color_mode: 0                       # 0:IR, 1:RGB
 laser_power: 300.0                  # IR laser power
 record_depth: false                 # if record depth images
-#daq_dev_name: Dev1                 # DAQ device name
-#daq_fs: 384000                     # DAQ sampling frequency
 ch_monitor: 0                       # DAQ ch number for realtime monitoring
 mic0pos:                            # microphone (ch:0) position (mm) relative to the L515 depth sensor center
 - 20.0                              # x
@@ -20,3 +18,5 @@ sound_pressure_calibration:         # pressure calibration of each microphone ch
 - 1.0
 - 1.0
 - 1.0
+
+enable_digital_input: false        # Enable digital input if supported by the hardware.
