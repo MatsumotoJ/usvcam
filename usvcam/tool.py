@@ -613,8 +613,8 @@ def calib_micpos(data_dir, SEG, P, calibfile=None, h5f_outpath=None, pos_lim=Non
 
         if pos_lim is None:
             if pos_searchlim is None:
-                lb = np.tile([-0.01, -0.01, -0.003], (n_mic-1,1))
-                ub = np.tile([0.01, 0.01, 0.003], (n_mic-1,1))
+                lb = np.tile([-0.02, -0.02, -0.003], (n_mic-1,1))
+                ub = np.tile([0.02, 0.02, 0.003], (n_mic-1,1))
             else:
                 lb = dx0 + np.tile(pos_searchlim[0], (n_mic-1,1))
                 ub = dx0 + np.tile(pos_searchlim[1], (n_mic-1,1))
