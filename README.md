@@ -8,6 +8,8 @@
 
 ## News
 
+2026/11/25: A 4-channel digital input is now available as an option for the all-in-one recording device, enabling precise synchronization with other devices. 
+
 2026/1/19: The **all-in-one recording device** (camera, 8-channel MEMS microphone array, and A/D converter) for USVCAM is now commercially available from *the Katou Acoustics Consultant Office*. 
 
 <img src="./docs/imgs/dev_katou8ch.jpg" width="30%">
